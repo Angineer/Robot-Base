@@ -23,10 +23,8 @@ robie_inv::Inventory base(inventory_size);
 robie_inv::Manager manager(&base, &server);
 
 void check_slot_quant(unsigned char slot){
-    int quant = base.get_count_available(slot);
-    std::string message = "Slot "+ std::to_string(slot) +" now has this many:";
-    std::cout << message << std::endl;
-    std::cout << quant << std::endl;
+    map<robie_inv::ItemType, int> inv = base.get_current_inventory();
+    std::cout << "Slot " << std::to_string(slot) << " now has this many:" << inv.size() << std::endl;
 }
 
 void shutdown(int signum){
@@ -44,9 +42,9 @@ int main()
     base.change_slot_type(1, &cracker);
     base.change_slot_type(2, &granola);
 
-    for (int i=0; i<3; i++){
-        base.add(i, 5);
-    }
+    base.add(apple, 5);
+    base.add(cracker, 5);
+    base.add(granola, 5);
 
     // Kill manager gracefully on ctrl+c
     std::signal(SIGINT, shutdown);

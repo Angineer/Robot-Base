@@ -43,7 +43,7 @@ namespace robie_inv{
             Order(map<ItemType, int> items);
 
             map<ItemType, int> get_order();
-            void serialize();
+            void write_serial();
     };
 
     class Slot

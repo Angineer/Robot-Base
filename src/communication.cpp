@@ -126,14 +126,14 @@ namespace robie_comm{
     Command::Command(std::string command){
         this->command = command;
     }
-    void Command::serialize(){
+    void Command::write_serial(){
         this->serial = "c" + this->command;
     }
 
     Status::Status(StatusCode status){
         this->status = status;
     }
-    void Status::serialize(){
+    void Status::write_serial(){
         this->serial = "s" + std::to_string(int(status));
     }
 

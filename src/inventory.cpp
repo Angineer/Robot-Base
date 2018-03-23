@@ -4,7 +4,7 @@
 #include "cereal/cereal.hpp"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
-#include "cereal/types/vector.hpp"
+#include "cereal/types/map.hpp"
 
 using robie_comm::StatusCode;
 
@@ -30,7 +30,7 @@ namespace robie_inv{
     map<ItemType, int> Order::get_order(){
         return this->items;
     }
-    void Order::serialize(){
+    void Order::write_serial(){
         stringstream ss;
         {
             cereal::BinaryOutputArchive oarchive(ss); // Create an output archive

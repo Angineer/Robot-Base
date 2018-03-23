@@ -33,7 +33,7 @@ namespace robie_comm{
         protected:
             std::string serial;
         public:
-            virtual void serialize() = 0;
+            virtual void write_serial() = 0;
             std::string get_serial() const;
     };
 
@@ -42,7 +42,7 @@ namespace robie_comm{
             std::string command;
         public:
             Command(std::string command);
-            void serialize();
+            void write_serial();
     };
 
     class Status: public Message{
@@ -50,7 +50,7 @@ namespace robie_comm{
             StatusCode status;
         public:
             Status(StatusCode status);
-            void serialize();
+            void write_serial();
     };
 
     class Socket{
@@ -84,6 +84,6 @@ namespace robie_comm{
             void shutdown();
     };
 
-} // robot_comm namespace
+} // robie_comm namespace
 
 #endif
