@@ -14,96 +14,76 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "cereal/cereal.hpp"
-#include "cereal/archives/binary.hpp"
-#include "cereal/types/string.hpp"
-#include "cereal/types/vector.hpp"
-
-#include "inventory_manager.h"
-
 #define MSG_LENGTH 256
 
-namespace robot
-{
+namespace robie_comm{
 
-class Socket
-{
-    protected:
-        int sockfd, portno, n;
-        struct sockaddr_in serv_addr;
-        struct hostent *server;
-        char buffer[MSG_LENGTH]; // Message buffer
-        size_t len; // Length of message
-    public:
-        Socket(std::string host, int portno);
-};
+    enum class StatusCode{
+        unknown = -99,
+        battery_low = -2,
+        unavailable = -1,
+        ready = 0,
+        delivering = 1,
+        waiting = 2,
+        returning = 3,
+        dispensing = 4
+    };
 
-class Client: public Socket
-{
-    private:
-        struct hostent *server;
-    public:
-        Client(std::string host, int portno);
-        void connect_client();
-        void disconnect();
-        void send(std::string message);
-};
+    class Message{
+        protected:
+            std::string serial;
+        public:
+            virtual void serialize() = 0;
+            std::string get_serial() const;
+    };
 
-class Server: public Socket
-{
-    private:
-        struct sockaddr_in cli_addr;
-        socklen_t clilen;
-        pid_t pID;
-    public:
-        Server(std::string host, int portno);
-        void serve(std::function<void(char*, int)> callback_func);
-        void shutdown();
-};
+    class Command: public Message{
+        private:
+            std::string command;
+        public:
+            Command(std::string command);
+            void serialize();
+    };
 
-class Message
-{
-    protected:
-        std::string serial;
-    public:
-        std::string get_serial();
-};
+    class Status: public Message{
+        private:
+            StatusCode status;
+        public:
+            Status(StatusCode status);
+            void serialize();
+    };
 
-class Command: public Message
-{
-    public:
-        Command(std::string command);
-};
+    class Socket{
+        protected:
+            int sockfd, portno, n;
+            struct sockaddr_in serv_addr;
+            struct hostent *server;
+            char buffer[MSG_LENGTH]; // Message buffer
+        public:
+            Socket(std::string host, int portno);
+    };
 
-class Order: public Message
-{
-    private:
-        std::vector<ItemType> items;
-        std::vector<int> quantities;
-    public:
-        Order(std::vector<ItemType> items, std::vector<int> quantities);
-        int get_count(unsigned int position);
-        ItemType get_item(unsigned int position);
-        int get_num_components();
-        void serialize();
-};
+    class Client: public Socket{
+        private:
+            struct hostent *server;
+        public:
+            Client(std::string host, int portno);
+            void connect();
+            void disconnect();
+            void send(const Message& message);
+    };
 
-class Status: public Message
-{
-    /* Status codes:
-     * -99: Unknown error
-     * -2: Battery low
-     * -1: Robot unavailable/powered off
-     * 0: Ready to accept new orders
-     * 1: Delivering order
-     * 2: Waiting for pickup
-     * 3: Returning to base
-     * 4: Dispensing
-     */
-    public:
-        Status(std::string status);
-};
+    class Server: public Socket{
+        private:
+            struct sockaddr_in cli_addr;
+            socklen_t clilen;
+            pid_t pID;
+        public:
+            Server(std::string host, int portno);
+            void serve(std::function<void(char*, int)> callback_func);
+            void shutdown();
+    };
 
-}
+} // robot_comm namespace
 
 #endif

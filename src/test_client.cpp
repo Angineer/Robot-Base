@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-robot::Client client("localhost", 5000);
+robot_comm::Client client("localhost", 5000);
 int count_items = 2;
 
 void shutdown(int signum){
@@ -22,15 +22,14 @@ void send_command(){
     // Remove new line
     command_str.erase(std::remove(command_str.begin(), command_str.end(), '\n'), command_str.end());
 
-    robot::Command command(command_str);
+    robot_comm::Command command(command_str);
 
-    client.send(command.get_serial());
+    client.send(command);
 }
 
 void send_order(){
     char buffer[256];
-    std::vector<robot::ItemType> items;
-    std::vector<int> quantities;
+    std::vector<robot::Component> items;
 
     printf("-----New order-----\n");
 
@@ -49,18 +48,18 @@ void send_order(){
         fgets(buffer,63,stdin);
         std::string quant_str(buffer);
         int quant = stoi(quant_str);
+        robot::ItemType type(item_name);
 
-        robot::ItemType item_type(item_name);
+        robot::Component item(type, quant);
 
-        items.push_back(item_type);
-        quantities.push_back(quant);
+        items.push_back(item);
 
     }
 
-    robot::Order order(items, quantities);
+    robot::Order order(items);
 
     order.serialize();
-    client.send(order.get_serial());
+    client.send(order);
 }
 
 void send_status(){
@@ -73,9 +72,9 @@ void send_status(){
     // Remove new line
     status_str.erase(std::remove(status_str.begin(), status_str.end(), '\n'), status_str.end());
 
-    robot::Status status(status_str);
+    robot_comm::Status status(static_cast<robot_comm::StatusCode>(stoi(status_str)));
 
-    client.send(status.get_serial());
+    client.send(status);
 }
 
 int main(int argc, char *argv[])
@@ -86,7 +85,7 @@ int main(int argc, char *argv[])
     char buffer[256];
 
     while (true){
-        client.connect_client();
+        client.connect();
         std::cout << "Client connected" << std::endl;
         bool connect = true;
 
@@ -104,48 +103,4 @@ int main(int argc, char *argv[])
             std::cout << "Message sent" << std::endl;
         }
     }
-    /*
-    int sockfd, portno, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
-
-    char buffer[256];
-    if (argc < 3) {
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
-    portno = atoi(argv[2]);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
-    server = gethostbyname(argv[1]);
-    if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
-        exit(0);
-    }
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(portno);
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
-        error("ERROR connecting");
-
-
-    printf("Please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0)
-         error("ERROR writing to socket");
-    bzero(buffer,256);
-    n = read(sockfd,buffer,255);
-    if (n < 0)
-         error("ERROR reading from socket");
-    printf("%s\n",buffer);
-    close(sockfd);
-    return 0;
-    */
 }

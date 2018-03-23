@@ -1,19 +1,60 @@
-#include "../include/inventory_manager.h"
+#include "../include/inventory.h"
 #include "../include/communication.h"
 
-namespace robot
-{
+#include "cereal/cereal.hpp"
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/vector.hpp"
 
-// Item type
-ItemType::ItemType(){
-    // Default constructor for Cereal
-}
-ItemType::ItemType(const std::string& name){
-    this->name = name;
-}
-const std::string& ItemType::get_name() const{
-    return this->name;
-}
+namespace robie_inv{
+
+    // Item type
+    ItemType::ItemType(){
+        // Default constructor for Cereal
+    }
+    ItemType::ItemType(const std::string& name){
+        this->name = name;
+    }
+    const std::string& ItemType::get_name() const{
+        return this->name;
+    }
+    bool ItemType::operator<(const ItemType &item) const{
+        return this->name < item.name;
+    }
+
+    // Component
+    Component::Component(){
+        // Default constructor for Cereal
+    }
+    Component::Component(ItemType item, int quantity){
+        this->item = item;
+        this->quantity = quantity;
+    }
+
+    Order::Order(std::vector<Component> items){
+        this->items = items;
+    }
+    int Order::get_count(unsigned int position){
+        return this->items[position].quantity;
+    }
+    int Order::get_num_components(){
+        return this->items.size();
+    }
+    ItemType Order::get_item(unsigned int position){
+        return this->items[position].item;
+    }
+    void Order::serialize(){
+        std::stringstream ss;
+        {
+            cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
+
+            oarchive(this->items); // Write the data to the archive
+        }
+
+        std::string serial_str = ss.str();
+
+        this->serial = "o" + serial_str;
+    }
 
 // Slot
 Slot::Slot(){
@@ -135,8 +176,7 @@ void Manager::handle_order(char* input, int len){
 
     // Read in new order
     std::stringstream ss;
-    std::vector<ItemType> items;
-    std::vector<int> quantities;
+    std::vector<Component> items;
 
     //std::cout << len << std::endl;
 
@@ -147,7 +187,7 @@ void Manager::handle_order(char* input, int len){
     {
         cereal::BinaryInputArchive iarchive(ss); // Create an input archive
 
-        iarchive(items, quantities); // Read the data from the archive
+        iarchive(items); // Read the data from the archive
     }
 
     // Double check order validity
@@ -163,20 +203,20 @@ void Manager::handle_order(char* input, int len){
     // Make sure items match inventory
     for (int i=0; i<count_items; i++){
         for (int j=0; j<count_slots; j++){
-            if (items[i].get_name() == this->inventory->get_type(j)->get_name()){
+            if (items[i].item.get_name() == this->inventory->get_type(j)->get_name()){
                 inventory_map[i] = j;
             }
         }
         if (inventory_map[i] < 0){
-            std::cout << "Order contains item not in inventory: " + items[i].get_name() + "!" << std::endl;
+            std::cout << "Order contains item not in inventory: " + items[i].item.get_name() + "!" << std::endl;
             valid_order = false;
             break;
         }
 
         // Make sure we have enough
-        if (quantities[i] > inventory->get_count_available(inventory_map[i])){
-            std::cout << "Insufficient quantity available: " + items[i].get_name() + "!" << std::endl;
-            std::cout << "Asked for " + std::to_string(quantities[i]) + ", but inventory has " + std::to_string(inventory->get_count_available(inventory_map[i])) << std::endl;
+        if (items[i].quantity > inventory->get_count_available(inventory_map[i])){
+            std::cout << "Insufficient quantity available: " + items[i].item.get_name() + "!" << std::endl;
+            std::cout << "Asked for " + std::to_string(items[i].quantity) + ", but inventory has " + std::to_string(inventory->get_count_available(inventory_map[i])) << std::endl;
             valid_order = false;
             break;
         }
@@ -185,11 +225,11 @@ void Manager::handle_order(char* input, int len){
     // If order is valid, reserve it
     if (valid_order){
         for (int i=0; i<count_items; i++){
-            this->inventory->reserve(inventory_map[i], quantities[i]);
+            this->inventory->reserve(inventory_map[i], items[i].quantity);
         }
 
         // Add order to queue
-        this->queue.emplace_back(items, quantities);
+        this->queue.emplace_back(items);
 
         std::cout << "New order placed!" << std::endl;
     }

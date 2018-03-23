@@ -1,17 +1,29 @@
 cmake_minimum_required (VERSION 2.6)
-project (Robot)
+project (Robot-Base)
 
-# file(GLOB SOURCE "./src/*.cpp")
+option(BUILD_TEST_CLIENT OFF)
 
+# Cereal dependency
 set(CEREAL_INCLUDE_FOLDER "../cereal/include" CACHE FILEPATH "Cereal include folder")
 include_directories(${CEREAL_INCLUDE_FOLDER})
 
-add_executable(inventory_server ./src/communication.cpp
-                                ./src/inventory_manager.cpp 
-                                ./src/inventory_server.cpp)
-add_executable(test_client ./src/communication.cpp
-                           ./src/inventory_manager.cpp
-                           ./src/test_client.cpp)
+# Robie library
+add_library(robie SHARED ./src/communication.cpp
+						 ./src/inventory.cpp)
+install(TARGETS robie LIBRARY DESTINATION /usr/lib)
+
+# Inventory server
+add_executable(inventory_server ./src/inventory_server.cpp)
 
 set_property(TARGET inventory_server PROPERTY CXX_STANDARD 11)
-set_property(TARGET test_client PROPERTY CXX_STANDARD 11)
+target_link_libraries(inventory_server robie)
+
+
+# Test client (optional)
+if(BUILD_TEST_CLIENT)
+	add_executable(test_client ./src/inventory_manager.cpp
+	                           ./src/test_client.cpp)
+
+	set_property(TARGET test_client PROPERTY CXX_STANDARD 11)
+	target_link_libraries(test_client robie_comm)
+endif()

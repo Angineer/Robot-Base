@@ -1,25 +1,25 @@
 #include "../include/communication.h"
-#include "../include/inventory_manager.h"
+#include "../include/inventory.h"
 
 #define MESSAGE_SIZE 8
 #define UI_SOCKET 5000
 #define DP_SOCKET 5001
 
 // Items that will be available for selection
-robot::ItemType apple("apple");
-robot::ItemType cracker("cracker");
-robot::ItemType granola("granola bar");
-robot::ItemType gummy("gummy bears");
+robie_inv::ItemType apple("apple");
+robie_inv::ItemType cracker("cracker");
+robie_inv::ItemType granola("granola bar");
+robie_inv::ItemType gummy("gummy bears");
 
 // Create server
-robot::Server server("localhost", UI_SOCKET);
+robie_comm::Server server("localhost", UI_SOCKET);
 
 // Set up initial inventory with empty slots
 const int inventory_size = 3;
-robot::Inventory base(inventory_size);
+robie_inv::Inventory base(inventory_size);
 
 // Set up the manager
-robot::Manager manager(&base, &server);
+robie_inv::Manager manager(&base, &server);
 
 void check_slot_quant(unsigned char slot){
     int quant = base.get_count_available(slot);
