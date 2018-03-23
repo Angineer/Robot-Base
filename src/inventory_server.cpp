@@ -5,7 +5,8 @@
 #define UI_SOCKET 5000
 #define DP_SOCKET 5001
 
-// Items that will be available for selection
+// Items that will be available for selection,
+// read in from config file
 robie_inv::ItemType apple("apple");
 robie_inv::ItemType cracker("cracker");
 robie_inv::ItemType granola("granola bar");

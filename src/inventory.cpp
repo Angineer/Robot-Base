@@ -6,52 +6,39 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
 
+using robie_comm::StatusCode;
+
 namespace robie_inv{
 
     // Item type
     ItemType::ItemType(){
         // Default constructor for Cereal
     }
-    ItemType::ItemType(const std::string& name){
+    ItemType::ItemType(const string& name){
         this->name = name;
     }
-    const std::string& ItemType::get_name() const{
+    const string& ItemType::get_name() const{
         return this->name;
     }
     bool ItemType::operator<(const ItemType &item) const{
         return this->name < item.name;
     }
 
-    // Component
-    Component::Component(){
-        // Default constructor for Cereal
-    }
-    Component::Component(ItemType item, int quantity){
-        this->item = item;
-        this->quantity = quantity;
-    }
-
-    Order::Order(std::vector<Component> items){
+    Order::Order(map<ItemType, int> items){
         this->items = items;
     }
-    int Order::get_count(unsigned int position){
-        return this->items[position].quantity;
-    }
-    int Order::get_num_components(){
-        return this->items.size();
-    }
-    ItemType Order::get_item(unsigned int position){
-        return this->items[position].item;
+    map<ItemType, int> Order::get_order(){
+        return this->items;
     }
     void Order::serialize(){
-        std::stringstream ss;
+        stringstream ss;
         {
             cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
 
             oarchive(this->items); // Write the data to the archive
         }
 
-        std::string serial_str = ss.str();
+        string serial_str = ss.str();
 
         this->serial = "o" + serial_str;
     }
@@ -67,15 +54,15 @@ void Slot::add_items(int quantity){
 }
 void Slot::change_type(const ItemType* new_type){
     if (this->type == NULL){ // If slot has not been ininitialized
-        std::cout << "Assigning item type " + new_type->get_name() << std::endl;
+        cout << "Assigning item type " + new_type->get_name() << endl;
         this->type = new_type;
     }
     else if (this->count == 0){
-        std::cout << "Changing item type from " + this->type->get_name() + " to " + new_type->get_name() << std::endl;
+        cout << "Changing item type from " + this->type->get_name() + " to " + new_type->get_name() << endl;
         this->type = new_type;
     }
     else{
-        std::cout << "Cannot change type when there are items remaining!" << std::endl;
+        cout << "Cannot change type when there are items remaining!" << endl;
     }
 }
 const ItemType* Slot::get_type() const{
@@ -92,7 +79,7 @@ void Slot::remove_items(int quantity){
         this->count -= quantity;
     }
     else{
-        std::cout << "Not enough items in slot!" << std::endl;
+        cout << "Not enough items in slot!" << endl;
     }
 }
 void Slot::reserve(int quantity){
@@ -100,7 +87,7 @@ void Slot::reserve(int quantity){
         this->reserved_count += quantity;
     }
     else{
-        std::cout << "Not enough items in slot!" << std::endl;
+        cout << "Not enough items in slot!" << endl;
     }
 }
 
@@ -108,26 +95,23 @@ void Slot::reserve(int quantity){
 Inventory::Inventory(int count_slots){
     slots.resize(count_slots);
 }
-void Inventory::add(unsigned int slot, unsigned int count){
-    slots[slot].add_items(count);
-}
-void Inventory::change_slot_type(unsigned int slot, const ItemType* new_type){
-    slots[slot].change_type(new_type);
-}
-unsigned int Inventory::get_count_available(unsigned int slot) const{
-    return slots[slot].get_count_available();
-}
-const ItemType* Inventory::get_type(unsigned int slot) const{
+const ItemType* Inventory::get_slot_type(int slot) const{
     return slots[slot].get_type();
 }
-int Inventory::get_num_slots(){
-    return slots.size();
+int Inventory::change_slot_type(int slot, const ItemType* new_type){
+    slots[slot].change_type(new_type);
 }
-void Inventory::remove(unsigned int slot, unsigned int count){
-    slots[slot].remove_items(count);
+map<ItemType, int> Inventory::get_current_inventory() const{
+    //TODO
+};
+void Inventory::add(ItemType type, int count){
+    slots[slot_map[type]].add_items(count);
 }
-void Inventory::reserve(unsigned int slot, unsigned int count){
-    slots[slot].reserve(count);
+void Inventory::remove(ItemType type, int count){
+    slots[slot_map[type]].remove_items(count);
+}
+void Inventory::reserve(ItemType type, int count){
+    slots[slot_map[type]].reserve(count);
 }
 
 // Manager
@@ -136,25 +120,25 @@ Manager::Manager(Inventory* inventory, Server* server){
     this->inventory = inventory;
     this->server = server;
 }
-void Manager::dispense_item(unsigned int slot, float quantity){
-    std::cout << "Dispensing item!" << std::endl;
+void Manager::dispense_item(ItemType item, float quantity){
+    cout << "Dispensing item!" << endl;
 }
 void Manager::handle_input(char* input, int len){
     if (len > 0){
 
         if (input[0] == 'c'){
             // Command
-            std::cout << "Command received" << std::endl;
+            cout << "Command received" << endl;
             handle_command(input, len);
         }
         else if (input[0] == 'o'){
             // Order
-            std::cout << "Order received" << std::endl;
+            cout << "Order received" << endl;
             handle_order(input, len);
         }
         else if (input[0] == 's'){
             // Status
-            std::cout << "Status update" << std::endl;
+            cout << "Status update" << endl;
             handle_status(input, len);
         }
 
@@ -162,23 +146,28 @@ void Manager::handle_input(char* input, int len){
     }
 }
 void Manager::handle_command(char* input, int len){
-    std::string command(input);
-    command = command.substr(1, std::string::npos);
+    string command(input);
+    command = command.substr(1, string::npos);
 
-    std::cout << command << std::endl;
+    cout << command << endl;
 
     if (command == "status"){
-        std::cout << "Current Status: " + std::to_string(this->status) << std::endl;
+        cout << "Current Status: ";
+        switch(this->status){
+            case(StatusCode::ready): cout << "Ready"; break;
+            default: cout << "Not ready";
+        }
+        cout << endl;
     }
 }
 void Manager::handle_order(char* input, int len){
-    std::cout << "Processing order..." << std::endl;
+    cout << "Processing order..." << endl;
 
     // Read in new order
-    std::stringstream ss;
-    std::vector<Component> items;
+    stringstream ss;
+    map<ItemType, int> items;
 
-    //std::cout << len << std::endl;
+    //cout << len << endl;
 
     for (int i = 1; i < len; i++){
         ss << input[i];
@@ -192,31 +181,21 @@ void Manager::handle_order(char* input, int len){
 
     // Double check order validity
     bool valid_order = true;
-    int count_slots = this->inventory->get_num_slots();
-    int count_items = items.size();
-    int inventory_map [count_items];
-
-    for (int i=0; i<count_items; i++){
-        inventory_map[i] = -1;
-    }
+    map<ItemType, int> existing = this->inventory->get_current_inventory();
 
     // Make sure items match inventory
-    for (int i=0; i<count_items; i++){
-        for (int j=0; j<count_slots; j++){
-            if (items[i].item.get_name() == this->inventory->get_type(j)->get_name()){
-                inventory_map[i] = j;
-            }
-        }
-        if (inventory_map[i] < 0){
-            std::cout << "Order contains item not in inventory: " + items[i].item.get_name() + "!" << std::endl;
+    for(map<ItemType, int>::iterator it = items.begin(); it != items.end(); ++it){
+
+        map<ItemType, int>::iterator item_in_inv = existing.find(it->first);
+
+        if(item_in_inv == existing.end()){
+            cout << "Order contains item not in inventory: " << it->first.get_name() << "!" << endl;
             valid_order = false;
             break;
         }
-
-        // Make sure we have enough
-        if (items[i].quantity > inventory->get_count_available(inventory_map[i])){
-            std::cout << "Insufficient quantity available: " + items[i].item.get_name() + "!" << std::endl;
-            std::cout << "Asked for " + std::to_string(items[i].quantity) + ", but inventory has " + std::to_string(inventory->get_count_available(inventory_map[i])) << std::endl;
+        if(item_in_inv->second < it->second){
+            cout << "Insufficient quantity available: " + it->first.get_name() + "!" << endl;
+            cout << "Asked for " << it->second << ", but inventory has " << item_in_inv->second << endl;
             valid_order = false;
             break;
         }
@@ -224,70 +203,59 @@ void Manager::handle_order(char* input, int len){
 
     // If order is valid, reserve it
     if (valid_order){
-        for (int i=0; i<count_items; i++){
-            this->inventory->reserve(inventory_map[i], items[i].quantity);
+        for (map<ItemType, int>::iterator it = items.begin(); it != items.end(); ++it){
+            this->inventory->reserve(it->first, it->second);
         }
 
         // Add order to queue
         this->queue.emplace_back(items);
 
-        std::cout << "New order placed!" << std::endl;
+        cout << "New order placed!" << endl;
     }
 }
 void Manager::handle_status(char* input, int len){
-    std::string new_status(input);
-    new_status = new_status.substr(1, std::string::npos);
+    // TODO: Unserialize status codes
+    // string new_status(input);
+    // new_status = new_status.substr(1, string::npos);
 
-    this->status = stoi(new_status);
+    // this->status = stoi(new_status);
 }
 void Manager::process_queue(){
-    std::cout << "Processing queue with size " + std::to_string(this->queue.size()) + "..." << std::endl;
+    cout << "Processing queue with size " + to_string(this->queue.size()) + "..." << endl;
     // First, check current status
     // If robot is occupied, do nothing
     // If robot is ready to go and queue has orders, start processing them
-    if (this->status == 0 && this->queue.size() > 0){
+    if (this->status == StatusCode::ready && this->queue.size() > 0){
         // Pop first order off queue
         Order curr_order = this->queue.front();
         this->queue.pop_front();
 
-        int count_components = curr_order.get_num_components();
-        int count_slots = this->inventory->get_num_slots();
-        int slot;
-        ItemType curr_item;
-        int curr_count;
+        map<ItemType, int> order = curr_order.get_order();
 
-        for (int i=0; i<count_components; i++){
-            curr_item = curr_order.get_item(i);
-            curr_count = curr_order.get_count(i);
-            slot = -1;
-
-            for (int j=0; j<count_slots; j++){
-                if (curr_item.get_name() == this->inventory->get_type(j)->get_name()){
-                    slot = j;
-                    break;
-                }
-            }
+        for (map<ItemType, int>::iterator it = order.begin(); it != order.end(); ++it){
 
             // Dispense items
-            dispense_item(slot, curr_count);
+            dispense_item(it->first, it->second);
 
             // Subtract inventory
-            this->inventory->remove(slot, curr_count);
+            this->inventory->remove(it->first, it->second);
 
             // Unreserve quantities
-            this->inventory->reserve(slot, -curr_count);
+            this->inventory->reserve(it->first, it->second);
         }
     }
 
-    std::cout << "After processing queue, the inventory status is:" << std::endl;
-    for (int i=0; i<this->inventory->get_num_slots(); i++){
-        std::cout << this->inventory->get_type(i)->get_name() + " has " + std::to_string(this->inventory->get_count_available(i)) << std::endl;
+    map<ItemType, int> inventory = this->inventory->get_current_inventory();
+
+    cout << "After processing queue, the inventory status is:" << endl;
+    for (map<ItemType, int>::iterator it = inventory.begin(); it != inventory.end(); ++it){
+        cout << it->first.get_name() << " has " << it->second << endl;
     }
 }
 void Manager::run(){
 
     // Create callback function that can be passed as argument
-    std::function<void(char*, int)> callback_func(std::bind(&Manager::handle_input, this, std::placeholders::_1, std::placeholders::_2));
+    function<void(char*, int)> callback_func(bind(&Manager::handle_input, this, placeholders::_1, placeholders::_2));
 
     // Run server and process callbacks
     server->serve(callback_func);

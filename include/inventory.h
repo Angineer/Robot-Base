@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <iostream>
+#include <map>
 #include <netinet/in.h>
 #include <queue>
 #include <string.h>
@@ -13,18 +14,21 @@
 
 #include "communication.h"
 
+using namespace std;
+
 namespace robie_inv{
     using robie_comm::Message;
     using robie_comm::Server;
+    using robie_comm::StatusCode;
 
     class ItemType{
         private:
-            std::string name;
+            string name;
         public:
             ItemType();
-            ItemType(const std::string& name);
+            ItemType(const string& name);
 
-            const std::string& get_name() const;
+            const string& get_name() const;
             template <class Archive>
                 void serialize(Archive & archive){
                     archive( name );
@@ -34,12 +38,11 @@ namespace robie_inv{
 
     class Order: public Message{
         private:
-            std::map<ItemType, int> items;
+            map<ItemType, int> items;
         public:
-            Order(std::map<ItemType, int> items);
+            Order(map<ItemType, int> items);
 
-            int get_count(ItemType type);
-            int get_num_components();
+            map<ItemType, int> get_order();
             void serialize();
     };
 
@@ -63,16 +66,19 @@ namespace robie_inv{
     class Inventory
     {
         private:
-            std::vector<Slot> slots;
+            vector<Slot> slots;
+            map<ItemType, int> slot_map;
         public:
             Inventory(int count_slots);
+
+            const ItemType* get_slot_type(int slot) const;
+            int change_slot_type(int slot, const ItemType* new_type);
+            
+            map<ItemType, int> get_current_inventory() const;
+
             void add(ItemType type, int count);
-            void change_slot_type(unsigned int slot, ItemType new_type);
-            int get_available_count(ItemType);
-            const ItemType* get_type(unsigned int slot) const;
-            std::vector<ItemType> get_available_types();
-            void remove(unsigned int slot, unsigned int count);
-            void reserve(unsigned int slot, unsigned int count);
+            void remove(ItemType type, int count);
+            void reserve(ItemType type, int count);
     };
 
     class Manager
@@ -80,10 +86,10 @@ namespace robie_inv{
         private:
             Inventory* inventory;
             Server* server;
-            std::deque<Order> queue;
-            int status;
+            deque<Order> queue;
+            StatusCode status;
 
-            void dispense_item(unsigned int slot, float quantity);
+            void dispense_item(ItemType item, float quantity);
             void get_robot_state();
             void handle_input(char* input, int len);
             void handle_command(char* input, int len);
