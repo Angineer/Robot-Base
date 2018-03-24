@@ -34,6 +34,7 @@ namespace robie_inv{
                     archive( name );
                 }
             bool operator<(const ItemType &item) const;
+            bool operator==(const ItemType &item) const;
     };
 
     class Order: public Message{
@@ -49,14 +50,14 @@ namespace robie_inv{
     class Slot
     {
         private:
-            const ItemType* type;
+            ItemType type;
             int count;
             int reserved_count;
         public:
             Slot();
             void add_items(int quantity);
-            void change_type(const ItemType* new_type);
-            const ItemType* get_type() const;
+            void change_type(ItemType new_type);
+            ItemType get_type() const;
             int get_count_available() const;
             int get_count_total() const;
             void remove_items(int quantity);
@@ -71,8 +72,8 @@ namespace robie_inv{
         public:
             Inventory(int count_slots);
 
-            const ItemType* get_slot_type(int slot) const;
-            int change_slot_type(int slot, const ItemType* new_type);
+            ItemType get_slot_type(int slot) const;
+            int change_slot_type(int slot, ItemType new_type);
             
             map<ItemType, int> get_current_inventory() const;
 

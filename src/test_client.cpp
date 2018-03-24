@@ -1,9 +1,9 @@
 #include "../include/communication.h"
-#include "../include/inventory_manager.h"
+#include "../include/inventory.h"
 
 #include <algorithm>
 
-robot_comm::Client client("localhost", 5000);
+robie_comm::Client client("localhost", 5000);
 int count_items = 2;
 
 void shutdown(int signum){
@@ -22,14 +22,15 @@ void send_command(){
     // Remove new line
     command_str.erase(std::remove(command_str.begin(), command_str.end(), '\n'), command_str.end());
 
-    robot_comm::Command command(command_str);
+    robie_comm::Command command(command_str);
+    command.write_serial();
 
     client.send(command);
 }
 
 void send_order(){
     char buffer[256];
-    std::vector<robot::Component> items;
+    map<robie_inv::ItemType, int> items;
 
     printf("-----New order-----\n");
 
@@ -47,18 +48,16 @@ void send_order(){
         bzero(buffer,64);
         fgets(buffer,63,stdin);
         std::string quant_str(buffer);
+
         int quant = stoi(quant_str);
-        robot::ItemType type(item_name);
+        robie_inv::ItemType type(item_name);
 
-        robot::Component item(type, quant);
-
-        items.push_back(item);
-
+        items.insert(pair<robie_inv::ItemType, int>(type, quant));
     }
 
-    robot::Order order(items);
+    robie_inv::Order order(items);
 
-    order.serialize();
+    order.write_serial();
     client.send(order);
 }
 
@@ -72,7 +71,7 @@ void send_status(){
     // Remove new line
     status_str.erase(std::remove(status_str.begin(), status_str.end(), '\n'), status_str.end());
 
-    robot_comm::Status status(static_cast<robot_comm::StatusCode>(stoi(status_str)));
+    robie_comm::Status status(static_cast<robie_comm::StatusCode>(stoi(status_str)));
 
     client.send(status);
 }

@@ -23,6 +23,9 @@ namespace robie_inv{
     bool ItemType::operator<(const ItemType &item) const{
         return this->name < item.name;
     }
+    bool ItemType::operator==(const ItemType &item) const{
+        return this->name == item.name;
+    }
 
     Order::Order(map<ItemType, int> items){
         this->items = items;
@@ -45,27 +48,27 @@ namespace robie_inv{
 
 // Slot
 Slot::Slot(){
-    this->type = NULL;
+    this->type = ItemType("Empty");
     this->count = 0;
     this->reserved_count = 0;
 }
 void Slot::add_items(int quantity){
     this->count += quantity;
 }
-void Slot::change_type(const ItemType* new_type){
-    if (this->type == NULL){ // If slot has not been ininitialized
-        cout << "Assigning item type " + new_type->get_name() << endl;
+void Slot::change_type(ItemType new_type){
+    if (this->type == ItemType("Empty")){ // If slot has not been ininitialized
+        cout << "Assigning item type " << new_type.get_name() << endl;
         this->type = new_type;
     }
     else if (this->count == 0){
-        cout << "Changing item type from " + this->type->get_name() + " to " + new_type->get_name() << endl;
+        cout << "Changing item type from " + this->type.get_name() + " to " + new_type.get_name() << endl;
         this->type = new_type;
     }
     else{
         cout << "Cannot change type when there are items remaining!" << endl;
     }
 }
-const ItemType* Slot::get_type() const{
+ItemType Slot::get_type() const{
     return this->type;
 }
 int Slot::get_count_available() const{
@@ -95,14 +98,27 @@ void Slot::reserve(int quantity){
 Inventory::Inventory(int count_slots){
     slots.resize(count_slots);
 }
-const ItemType* Inventory::get_slot_type(int slot) const{
+ItemType Inventory::get_slot_type(int slot) const{
     return slots[slot].get_type();
 }
-int Inventory::change_slot_type(int slot, const ItemType* new_type){
+int Inventory::change_slot_type(int slot, ItemType new_type){
     slots[slot].change_type(new_type);
 }
 map<ItemType, int> Inventory::get_current_inventory() const{
-    //TODO
+    map<ItemType, int> curr_inventory;
+
+    for(vector<Slot>::const_iterator it = slots.begin(); it != slots.end(); ++it){
+        // If slot type already in map, combine them
+        map<ItemType, int>::iterator existing = curr_inventory.find(it->get_type());
+        if(existing != curr_inventory.end()){
+            existing->second += it->get_count_available();
+        }
+        // Else, add a new entry for the type
+        else{
+            curr_inventory.insert(pair<ItemType, int>(it->get_type(), it->get_count_available()));
+        }
+    }
+    return curr_inventory;
 };
 void Inventory::add(ItemType type, int count){
     slots[slot_map[type]].add_items(count);

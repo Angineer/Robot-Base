@@ -34,14 +34,14 @@ namespace robie_comm{
         // First send the message length
         int len = content.length();
 
-        memcpy(buffer, &len, sizeof(size_t));
-        n = write(sockfd, buffer, sizeof(size_t));
+        memcpy(buffer, &len, sizeof(len));
+        n = ::write(sockfd, buffer, sizeof(len));
         if (n < 0)
              std::cout << "ERROR writing to socket" << std::endl;
 
         // Then send the actual message
         memcpy(buffer, content.c_str(), len);
-        n = write(sockfd, buffer, len);
+        n = ::write(sockfd, buffer, len);
         if (n < 0)
              std::cout << "ERROR writing to socket" << std::endl;
     }
@@ -86,13 +86,13 @@ namespace robie_comm{
 
                         // Read length of message from socket
                         int len;
-                        n = read(newsockfd, buffer, sizeof(size_t));
-                        memcpy(&len, buffer, sizeof(size_t));
+                        n = ::read(newsockfd, buffer, sizeof(len));
+                        memcpy(&len, buffer, sizeof(len));
                         if (n < 0)
                             std::cout << "ERROR reading from socket!" << std::endl;
 
                         // Then read message
-                        n = read(newsockfd, buffer, len);
+                        n = ::read(newsockfd, buffer, len);
                         if (n < 0)
                             std::cout << "ERROR reading from socket!" << std::endl;
 
