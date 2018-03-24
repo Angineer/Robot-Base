@@ -1,16 +1,40 @@
 #include "../include/communication.h"
 #include "../include/inventory.h"
+#include <fstream>
 
 #define UI_SOCKET 5000
 #define DP_SOCKET 5001
 #define INV_SIZE 3 // How many physical slots in inventory
 
-// Items that will be available for selection,
-// TODO: read in from config file
-robie_inv::ItemType apple("apple");
-robie_inv::ItemType cracker("cracker");
-robie_inv::ItemType granola("granola bar");
-robie_inv::ItemType gummy("gummy bears");
+using namespace std;
+
+void load_inventory(string file_path, robie_inv::Inventory& inv){
+    ifstream in_file;
+    string item;
+    int quant;
+
+    cout << "Loading inventory from config file..." << endl;
+
+    in_file.open(file_path);
+    if (!in_file) {
+        cerr << "Error reading file " << file_path << endl;
+    }
+    else{
+        // TODO: Check that inventory has sufficient room for config
+        int i = 0;
+        while(in_file >> item >> quant){
+            robie_inv::ItemType curr_type(item);
+            inv.change_slot_type(i, curr_type);
+            inv.add(curr_type, quant);
+            i++;
+        }
+        in_file.close();
+    }
+}
+
+void save_inventory(){
+    // TODO
+}
 
 // Set up initial inventory with empty slots
 robie_inv::Inventory base(INV_SIZE);
@@ -20,12 +44,6 @@ robie_comm::Server server("localhost", UI_SOCKET);
 
 // Set up the manager
 robie_inv::Manager manager(&base, &server);
-
-// Debugging function
-void check_slot_quant(unsigned char slot){
-    map<robie_inv::ItemType, int> inv = base.get_current_inventory();
-    std::cout << "Slot " << std::to_string(slot) << " now has this many:" << inv.size() << std::endl;
-}
 
 void shutdown(int signum){
     manager.shutdown();
@@ -37,14 +55,8 @@ int main()
 {
     std::cout << "Starting Inventory Manager" << std::endl;
 
-    // Set up slots with assigned items
-    base.change_slot_type(0, apple);
-    base.change_slot_type(1, cracker);
-    //base.change_slot_type(2, granola);
-
-    base.add(apple, 5);
-    base.add(cracker, 5);
-    //base.add(granola, 5);
+    // Load initial inventory settings from file
+    load_inventory("/home/andy/Desktop/git/Robot-Base/inventory.conf", base);
 
     // Kill manager gracefully on ctrl+c
     std::signal(SIGINT, shutdown);
