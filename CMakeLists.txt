@@ -12,6 +12,9 @@ add_library(robie SHARED ./src/communication.cpp
 						 ./src/inventory.cpp)
 install(TARGETS robie LIBRARY DESTINATION /usr/lib)
 
+find_package(Threads)
+target_link_libraries(robie ${CMAKE_THREAD_LIBS_INIT})
+
 # Inventory server
 add_executable(inventory_server ./src/inventory_server.cpp)
 

@@ -68,12 +68,12 @@ namespace robie_inv{
     {
         private:
             vector<Slot> slots;
-            map<ItemType, int> slot_map;
         public:
             Inventory(int count_slots);
 
             ItemType get_slot_type(int slot) const;
             int change_slot_type(int slot, ItemType new_type);
+            int get_matching_slot(ItemType type) const; // Returns first slot that matches the provided type
             
             map<ItemType, int> get_current_inventory() const;
 

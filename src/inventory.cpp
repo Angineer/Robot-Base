@@ -48,7 +48,7 @@ namespace robie_inv{
 
 // Slot
 Slot::Slot(){
-    this->type = ItemType("Empty");
+    this->type = ItemType("<empty>");
     this->count = 0;
     this->reserved_count = 0;
 }
@@ -104,6 +104,12 @@ ItemType Inventory::get_slot_type(int slot) const{
 int Inventory::change_slot_type(int slot, ItemType new_type){
     slots[slot].change_type(new_type);
 }
+int Inventory::get_matching_slot(ItemType type) const{
+    for(vector<Slot>::const_iterator it = slots.begin(); it != slots.end(); ++it){
+        if(it->get_type() == type) return it - slots.begin();
+    }
+    return -1;
+}
 map<ItemType, int> Inventory::get_current_inventory() const{
     map<ItemType, int> curr_inventory;
 
@@ -121,13 +127,25 @@ map<ItemType, int> Inventory::get_current_inventory() const{
     return curr_inventory;
 };
 void Inventory::add(ItemType type, int count){
-    slots[slot_map[type]].add_items(count);
+    int slot_idx = get_matching_slot(type);
+
+    if(slot_idx >= 0){
+        slots[slot_idx].add_items(count);
+    }
 }
 void Inventory::remove(ItemType type, int count){
-    slots[slot_map[type]].remove_items(count);
+    int slot_idx = get_matching_slot(type);
+
+    if(slot_idx >= 0){
+        slots[slot_idx].remove_items(count);
+    }
 }
 void Inventory::reserve(ItemType type, int count){
-    slots[slot_map[type]].reserve(count);
+    int slot_idx = get_matching_slot(type);
+
+    if(slot_idx >= 0){
+        slots[slot_idx].reserve(count);
+    }
 }
 
 // Manager
@@ -183,8 +201,6 @@ void Manager::handle_order(char* input, int len){
     stringstream ss;
     map<ItemType, int> items;
 
-    //cout << len << endl;
-
     for (int i = 1; i < len; i++){
         ss << input[i];
     }
@@ -237,11 +253,13 @@ void Manager::handle_status(char* input, int len){
     // this->status = stoi(new_status);
 }
 void Manager::process_queue(){
-    cout << "Processing queue with size " + to_string(this->queue.size()) + "..." << endl;
     // First, check current status
     // If robot is occupied, do nothing
     // If robot is ready to go and queue has orders, start processing them
     if (this->status == StatusCode::ready && this->queue.size() > 0){
+
+        cout << "Processing queue with size " << this->queue.size() << "..." << endl;
+
         // Pop first order off queue
         Order curr_order = this->queue.front();
         this->queue.pop_front();
@@ -257,7 +275,7 @@ void Manager::process_queue(){
             this->inventory->remove(it->first, it->second);
 
             // Unreserve quantities
-            this->inventory->reserve(it->first, it->second);
+            this->inventory->reserve(it->first, -it->second);
         }
     }
 

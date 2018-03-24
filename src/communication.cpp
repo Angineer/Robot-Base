@@ -1,3 +1,13 @@
+#include <iostream>
+#include <netdb.h>
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <thread>
+#include <unistd.h>
+
 #include "../include/communication.h"
 
 namespace robie_comm{
@@ -60,58 +70,55 @@ namespace robie_comm{
             exit(1);
         }
     }
+    void Server::child_serve(int sockfd, std::function<void(char*, int)> callback_func){
+        std::cout << "Child process started!" << std::endl;
+
+        // Process data until disconnect
+        bool connect = true;
+        while(connect){
+            // Clear buffer
+            memset(buffer, 0, MSG_LENGTH);
+
+            // Read length of message from socket
+            int len;
+            n = read(sockfd, buffer, sizeof(len));
+            memcpy(&len, buffer, sizeof(len));
+            if (n < 0)
+                std::cout << "ERROR reading from socket!" << std::endl;
+
+            // Then read message
+            n = read(sockfd, buffer, len);
+            if (n < 0)
+                std::cout << "ERROR reading from socket!" << std::endl;
+
+            // Check for disconnect
+            if ((n == 0)){
+                close(sockfd);
+                std::cout << "Connection " << sockfd << " disconnected!" << std::endl;
+                connect = false;
+            }
+            else{
+                // Call callback using input
+                callback_func(buffer, len);
+            }
+        }
+    }
     void Server::serve(std::function<void(char*, int)> callback_func){
-        std::signal(SIGCHLD, SIG_IGN); // Let child processes fully die
+        //std::signal(SIGCHLD, SIG_IGN); // Let child processes fully die
 
         // Server runs forever
+        std::cout << "Listening for connections" << std::endl;
         while (true){
-            std::cout << "Listening for connections" << std::endl;
             listen(sockfd, 5);
             clilen = sizeof(cli_addr);
             int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
             if (newsockfd > 0){
-                std::cout << "Connection established!" << std::endl;
+                std::cout << "Connection " << newsockfd << " established!" << std::endl;
 
-                pID = fork(); // Create child process
-
-                if (pID == 0){
-                    std::cout << "Child process started!" << std::endl;
-                    close(sockfd);
-                    // Process data until disconnect
-                    bool connect = true;
-                    while(connect){
-                        // Clear buffer
-                        memset(buffer, 0, MSG_LENGTH);
-
-                        // Read length of message from socket
-                        int len;
-                        n = ::read(newsockfd, buffer, sizeof(len));
-                        memcpy(&len, buffer, sizeof(len));
-                        if (n < 0)
-                            std::cout << "ERROR reading from socket!" << std::endl;
-
-                        // Then read message
-                        n = ::read(newsockfd, buffer, len);
-                        if (n < 0)
-                            std::cout << "ERROR reading from socket!" << std::endl;
-
-                        // Check for disconnect
-                        if ((n == 0)){
-                            close(newsockfd);
-                            std::cout << "Disconnected!" << std::endl;
-                            connect = false;
-                        }
-                        else{
-                            // Call callback using input
-                            callback_func(buffer, len);
-                        }
-                    }
-                    exit(0);
-                }
-                else{
-                    close(newsockfd);
-                }
+                int temp;
+                std::thread t(&Server::child_serve, this, newsockfd, callback_func); // Create child thread
+                t.detach();
             }
         }
     }

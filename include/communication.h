@@ -3,16 +3,9 @@
 
 #include <csignal>
 #include <functional>
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sstream>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
+#include <string>
+#include <string.h>
 
 #define MSG_LENGTH 256
 
@@ -78,6 +71,8 @@ namespace robie_comm{
             struct sockaddr_in cli_addr;
             socklen_t clilen;
             pid_t pID;
+
+            void child_serve(int sockfd, std::function<void(char*, int)> callback_func);
         public:
             Server(std::string host, int portno);
             void serve(std::function<void(char*, int)> callback_func);

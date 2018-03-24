@@ -4,7 +4,7 @@
 #include <algorithm>
 
 robie_comm::Client client("localhost", 5000);
-int count_items = 2;
+int count_items = 1;
 
 void shutdown(int signum){
     client.disconnect();

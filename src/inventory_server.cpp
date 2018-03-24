@@ -1,13 +1,12 @@
 #include "../include/communication.h"
 #include "../include/inventory.h"
 
-#define MESSAGE_SIZE 8
 #define UI_SOCKET 5000
 #define DP_SOCKET 5001
-#define INV_SIZE 3
+#define INV_SIZE 3 // How many physical slots in inventory
 
 // Items that will be available for selection,
-// read in from config file
+// TODO: read in from config file
 robie_inv::ItemType apple("apple");
 robie_inv::ItemType cracker("cracker");
 robie_inv::ItemType granola("granola bar");
@@ -41,11 +40,11 @@ int main()
     // Set up slots with assigned items
     base.change_slot_type(0, apple);
     base.change_slot_type(1, cracker);
-    base.change_slot_type(2, granola);
+    //base.change_slot_type(2, granola);
 
     base.add(apple, 5);
     base.add(cracker, 5);
-    base.add(granola, 5);
+    //base.add(granola, 5);
 
     // Kill manager gracefully on ctrl+c
     std::signal(SIGINT, shutdown);
