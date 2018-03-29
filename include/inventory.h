@@ -47,6 +47,16 @@ namespace robie_inv{
             void write_serial();
     };
 
+    class Update: public Message{
+        private:
+            int slot_id;
+            ItemType new_type;
+            int new_quant;
+        public:
+            Update(int slot_id, ItemType new_type, int new_quant);
+            void write_serial();
+    };
+
     class Slot
     {
         private:
@@ -77,9 +87,10 @@ namespace robie_inv{
             
             map<ItemType, int> get_current_inventory() const;
 
-            void add(ItemType type, int count);
-            void remove(ItemType type, int count);
-            void reserve(ItemType type, int count);
+            void set_count(int slot, int count);
+            void add(int slot, int count);
+            void remove(int slot, int count);
+            void reserve(int slot, int count);
     };
 
     class Manager
@@ -90,10 +101,11 @@ namespace robie_inv{
             deque<Order> queue;
             StatusCode status;
 
-            void dispense_item(ItemType item, float quantity);
+            void dispense_item(int slot, float quantity);
             int handle_input(string input, string& response);
             string handle_command(string input);
             void handle_order(string input);
+            string handle_update(string input);
             StatusCode get_status();
             void process_queue();
         public:

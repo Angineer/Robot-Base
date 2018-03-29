@@ -7,7 +7,6 @@
 using namespace std;
 
 robie_comm::Client client("localhost", 5000);
-int count_items = 1;
 
 void shutdown(int signum){
     client.disconnect();
@@ -22,39 +21,53 @@ void send_command(string command_str){
 }
 
 void send_order(){
-    char buffer[256];
+    string user_input; // Reading directly from cin was giving me issues
+    int count_items;
+    string name;
+    int quant;
     map<robie_inv::ItemType, int> items;
 
-    printf("-----New order-----\n");
+    cout << "-----New order-----\n";
+    cout << "How many components? ";
+    getline(cin, user_input);
+    count_items = stoi(user_input);
 
     for (int i=0; i<count_items; i++){
 
-        printf("Item type: ");
-        bzero(buffer,64);
-        fgets(buffer,63,stdin);
-        string item_name(buffer);
+        cout << "Item type: ";
+        getline(cin, name);
+        cout << "Quantity: ";
+        getline(cin, user_input);
+        quant = stoi(user_input);
 
-        // Remove new line
-        item_name.erase(remove(item_name.begin(), item_name.end(), '\n'), item_name.end());
-
-        printf("Quantity: ");
-        bzero(buffer,64);
-        fgets(buffer,63,stdin);
-        string quant_str(buffer);
-
-        int quant = stoi(quant_str);
-        robie_inv::ItemType type(item_name);
+        robie_inv::ItemType type(name);
 
         items.insert(pair<robie_inv::ItemType, int>(type, quant));
     }
 
     robie_inv::Order order(items);
 
-    client.send(order);
+    cout << client.send(order) << endl;
 }
 
 void send_update(){
-    // TODO
+    string user_input; // Reading directly from cin was giving me issues
+    int slot_id;
+    string new_type;
+    int new_quant;
+
+    cout << "which slot? ";
+    getline(cin, user_input);
+    slot_id = stoi(user_input);
+    cout << "what type? ";
+    getline(cin, new_type);
+    cout << "how many? ";
+    getline(cin, user_input);
+    new_quant = stoi(user_input);
+
+    robie_inv::Update update(slot_id, robie_inv::ItemType(new_type), new_quant);
+
+    cout << client.send(update) << endl;
 }
 
 int main(int argc, char *argv[])
@@ -87,7 +100,7 @@ int main(int argc, char *argv[])
                 cout << "status    Get robot status" << endl;
                 cout << "inv       Get current inventory" << endl;
                 cout << "order     Place a new order" << endl;
-                cout << "update    Update an item in the inventory" << endl;
+                cout << "update    Update the inventory configuration" << endl;
                 cout << "help      Print this message" << endl;
                 cout << "exit      Quit" << endl;
             }

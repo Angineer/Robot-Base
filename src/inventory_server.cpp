@@ -27,7 +27,7 @@ void load_inventory(string file_path, robie_inv::Inventory& inv){
         while(in_file >> item >> quant){
             robie_inv::ItemType curr_type(item);
             inv.change_slot_type(i, curr_type);
-            inv.add(curr_type, quant);
+            inv.set_count(i, quant);
             i++;
         }
         in_file.close();
