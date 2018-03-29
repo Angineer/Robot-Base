@@ -43,17 +43,39 @@ namespace robie_comm{
 
         // First send the message length
         int len = content.length();
-
-        memcpy(buffer, &len, sizeof(len));
-        n = ::write(sockfd, buffer, sizeof(len));
+        n = ::write(sockfd, &len, sizeof(len));
         if (n < 0)
              std::cout << "ERROR writing to socket" << std::endl;
 
         // Then send the actual message
-        memcpy(buffer, content.c_str(), len);
-        n = ::write(sockfd, buffer, len);
+        n = ::write(sockfd, content.c_str(), len);
         if (n < 0)
              std::cout << "ERROR writing to socket" << std::endl;
+
+        // Read response length
+        n = read(sockfd, &len, sizeof(len));
+        if (n < 0){
+            std::cout << "ERROR reading from socket!" << std::endl;
+        }
+        else if (n > 0){
+            // Prep the buffer
+            buffer = new char[len];
+            memset(buffer, 0, len);
+
+            // Then read message
+            n = read(sockfd, buffer, len);
+            if (n < 0){
+                std::cout << "ERROR reading from socket!" << std::endl;
+            }
+            else if (n > 0){
+                // TODO: Do something with response
+                std::string response(buffer, len);
+                std::cout << "Response: " << response << std::endl;
+            }
+
+            // Clean up buffer
+            delete[] buffer;
+        }
     }
     void Client::disconnect(){
         close(sockfd);
@@ -70,40 +92,63 @@ namespace robie_comm{
             exit(1);
         }
     }
-    void Server::child_serve(int sockfd, std::function<void(char*, int)> callback_func){
-        std::cout << "Child process started!" << std::endl;
+    void Server::child_serve(int sockfd, std::function<int(std::string, std::string&)> callback_func){
+        int len;
+
+        std::cout << "Child thread started!" << std::endl;
 
         // Process data until disconnect
         bool connect = true;
         while(connect){
-            // Clear buffer
-            memset(buffer, 0, MSG_LENGTH);
-
             // Read length of message from socket
-            int len;
-            n = read(sockfd, buffer, sizeof(len));
-            memcpy(&len, buffer, sizeof(len));
-            if (n < 0)
+            n = read(sockfd, &len, sizeof(len));
+            if (n < 0){
                 std::cout << "ERROR reading from socket!" << std::endl;
-
-            // Then read message
-            n = read(sockfd, buffer, len);
-            if (n < 0)
-                std::cout << "ERROR reading from socket!" << std::endl;
-
-            // Check for disconnect
-            if ((n == 0)){
+            }
+            else if(n == 0){
                 close(sockfd);
                 std::cout << "Connection " << sockfd << " disconnected!" << std::endl;
                 connect = false;
             }
             else{
-                // Call callback using input
-                callback_func(buffer, len);
+                // Prep the buffer
+                buffer = new char[len];
+                memset(buffer, 0, len);
+
+                // Then read message
+                n = read(sockfd, buffer, len);
+                if (n < 0){
+                    std::cout << "ERROR reading from socket!" << std::endl;
+                }
+                else if (n == 0){
+                    close(sockfd);
+                    std::cout << "Connection " << sockfd << " disconnected!" << std::endl;
+                    connect = false;
+                }
+                else{
+                    // Call callback using input
+                    std::string message(buffer, len);
+                    std::string response;
+                    callback_func(message, response);
+
+                    // Send response length
+                    len = response.length();
+                    n = ::write(sockfd, &len, sizeof(len));
+                    if (n < 0)
+                         std::cout << "ERROR writing to socket" << std::endl;
+
+                    // Then send the actual message
+                    n = ::write(sockfd, response.c_str(), len);
+                    if (n < 0)
+                         std::cout << "ERROR writing to socket" << std::endl;
+                }
+
+                // Clean up buffer
+                delete[] buffer;
             }
         }
     }
-    void Server::serve(std::function<void(char*, int)> callback_func){
+    void Server::serve(std::function<int(std::string, std::string&)> callback_func){
         //std::signal(SIGCHLD, SIG_IGN); // Let child processes fully die
 
         // Server runs forever
@@ -116,7 +161,6 @@ namespace robie_comm{
             if (newsockfd > 0){
                 std::cout << "Connection " << newsockfd << " established!" << std::endl;
 
-                int temp;
                 std::thread t(&Server::child_serve, this, newsockfd, callback_func); // Create child thread
                 t.detach();
             }

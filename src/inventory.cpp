@@ -157,53 +157,44 @@ Manager::Manager(Inventory* inventory, Server* server){
 void Manager::dispense_item(ItemType item, float quantity){
     cout << "Dispensing item!" << endl;
 }
-void Manager::handle_input(char* input, int len){
-    if (len > 0){
+int Manager::handle_input(string input, string& response){
+    char code = input[0];
+    string message = input.substr(1, string::npos);
 
-        if (input[0] == 'c'){
-            // Command
-            cout << "Command received" << endl;
-            handle_command(input, len);
-        }
-        else if (input[0] == 'o'){
-            // Order
-            cout << "Order received" << endl;
-            handle_order(input, len);
-        }
-        else if (input[0] == 's'){
-            // Status
-            cout << "Status update" << endl;
-            handle_status(input, len);
-        }
-
-        process_queue();
+    if (code == 'c'){
+        // Command
+        response = handle_command(message);
     }
-}
-void Manager::handle_command(char* input, int len){
-    string command(input);
-    command = command.substr(1, string::npos);
-
-    cout << command << endl;
-
-    if (command == "status"){
-        cout << "Current Status: ";
-        switch(this->status){
-            case(StatusCode::ready): cout << "Ready"; break;
-            default: cout << "Not ready";
-        }
-        cout << endl;
+    else if (code == 'o'){
+        // Order
+        handle_order(message);
+        response = "Order received";
     }
+    else{
+        response = "Unrecognized input!";
+        return 1;
+    }
+
+    process_queue();
+
+    return 0;
 }
-void Manager::handle_order(char* input, int len){
+string Manager::handle_command(string input){
+    if (input == "status"){
+        switch(status){
+            case(StatusCode::ready): return "Ready"; break;
+            default: return "Not ready";
+        }
+    }
+
+    return "Command not recognized";
+}
+void Manager::handle_order(string input){
     cout << "Processing order..." << endl;
 
     // Read in new order
-    stringstream ss;
+    stringstream ss(input);
     map<ItemType, int> items;
-
-    for (int i = 1; i < len; i++){
-        ss << input[i];
-    }
 
     {
         cereal::BinaryInputArchive iarchive(ss); // Create an input archive
@@ -245,12 +236,8 @@ void Manager::handle_order(char* input, int len){
         cout << "New order placed!" << endl;
     }
 }
-void Manager::handle_status(char* input, int len){
-    // TODO: Unserialize status codes
-    // string new_status(input);
-    // new_status = new_status.substr(1, string::npos);
-
-    // this->status = stoi(new_status);
+StatusCode Manager::get_status(){
+    return status;
 }
 void Manager::process_queue(){
     // First, check current status
@@ -289,12 +276,14 @@ void Manager::process_queue(){
 void Manager::run(){
 
     // Create callback function that can be passed as argument
-    function<void(char*, int)> callback_func(bind(&Manager::handle_input, this, placeholders::_1, placeholders::_2));
+    function<int(string, string&)> callback_func(bind(&Manager::handle_input, this, placeholders::_1, placeholders::_2));
 
     // Run server and process callbacks
     server->serve(callback_func);
 }
 void Manager::shutdown(){
+    // TODO: save inventory to file
+    
     this->server->shutdown();
 }
 

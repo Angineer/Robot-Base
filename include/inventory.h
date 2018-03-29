@@ -91,11 +91,10 @@ namespace robie_inv{
             StatusCode status;
 
             void dispense_item(ItemType item, float quantity);
-            void get_robot_state();
-            void handle_input(char* input, int len);
-            void handle_command(char* input, int len);
-            void handle_order(char* input, int len);
-            void handle_status(char* input, int len);
+            int handle_input(string input, string& response);
+            string handle_command(string input);
+            void handle_order(string input);
+            StatusCode get_status();
             void process_queue();
         public:
             Manager(Inventory* inventory, Server* server);

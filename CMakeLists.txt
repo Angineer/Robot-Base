@@ -1,8 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (Robot-Base)
 
-option(BUILD_TEST_CLIENT "Build test client" ON)
-
 # Cereal dependency
 set(CEREAL_INCLUDE_FOLDER "../cereal/include" CACHE FILEPATH "Cereal include folder")
 include_directories(${CEREAL_INCLUDE_FOLDER})
@@ -21,10 +19,8 @@ add_executable(inventory_server ./src/inventory_server.cpp)
 set_property(TARGET inventory_server PROPERTY CXX_STANDARD 11)
 target_link_libraries(inventory_server robie)
 
-# Test client (optional)
-if(BUILD_TEST_CLIENT)
-	add_executable(test_client ./src/test_client.cpp)
+# Admin Client
+add_executable(admin_client ./src/admin_client.cpp)
 
-	set_property(TARGET test_client PROPERTY CXX_STANDARD 11)
-	target_link_libraries(test_client robie)
-endif()
+set_property(TARGET admin_client PROPERTY CXX_STANDARD 11)
+target_link_libraries(admin_client robie)

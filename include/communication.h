@@ -7,8 +7,6 @@
 #include <string>
 #include <string.h>
 
-#define MSG_LENGTH 256
-
 namespace robie_comm{
 
     enum class StatusCode{
@@ -51,7 +49,7 @@ namespace robie_comm{
             int sockfd, portno, n;
             struct sockaddr_in serv_addr;
             struct hostent *server;
-            char buffer[MSG_LENGTH]; // Message buffer
+            char* buffer; // Message buffer
         public:
             Socket(std::string host, int portno);
     };
@@ -72,10 +70,10 @@ namespace robie_comm{
             socklen_t clilen;
             pid_t pID;
 
-            void child_serve(int sockfd, std::function<void(char*, int)> callback_func);
+            void child_serve(int sockfd, std::function<int(std::string, std::string&)> callback_func);
         public:
             Server(std::string host, int portno);
-            void serve(std::function<void(char*, int)> callback_func);
+            void serve(std::function<int(std::string, std::string&)> callback_func);
             void shutdown();
     };
 
