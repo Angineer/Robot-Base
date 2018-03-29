@@ -26,7 +26,7 @@ void load_inventory(string file_path, robie_inv::Inventory& inv){
         int i = 0;
         while(in_file >> item >> quant){
             robie_inv::ItemType curr_type(item);
-            inv.change_slot_type(i, curr_type);
+            inv.set_type(i, curr_type);
             inv.set_count(i, quant);
             i++;
         }
@@ -39,7 +39,7 @@ void save_inventory(string file_path, robie_inv::Inventory& inv){
 
     cout << "Saving inventory to config file..." << endl;
 
-    map<robie_inv::ItemType, int> curr_inv = inv.get_current_inventory();
+    map<robie_inv::ItemType, int> curr_inv = inv.summarize_inventory();
 
     out_file.open(file_path);
     if (!out_file) {

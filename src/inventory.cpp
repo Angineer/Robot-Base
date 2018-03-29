@@ -68,96 +68,47 @@ namespace robie_inv{
         this->count = 0;
         this->reserved_count = 0;
     }
-    void Slot::add_items(int quantity){
-        this->count += quantity;
-    }
-    void Slot::change_type(ItemType new_type){
-        if (this->type == ItemType("Empty")){ // If slot has not been ininitialized
-            cout << "Assigning item type " << new_type.get_name() << endl;
-            this->type = new_type;
-        }
-        else if (this->count == 0){
-            cout << "Changing item type from " + this->type.get_name() + " to " + new_type.get_name() << endl;
-            this->type = new_type;
-        }
-        else{
-            cout << "Cannot change type when there are items remaining!" << endl;
-        }
-    }
-    ItemType Slot::get_type() const{
-        return this->type;
-    }
     int Slot::get_count_available() const{
-        return this->count - this->reserved_count;
-    }
-    int Slot::get_count_total() const{
-        return this->count;
-    }
-    void Slot::remove_items(int quantity){
-        if (this->count >= quantity){
-            this->count -= quantity;
-        }
-        else{
-            cout << "Not enough items in slot!" << endl;
-        }
-    }
-    void Slot::reserve(int quantity){
-        if (this->count - this->reserved_count >= quantity){
-            this->reserved_count += quantity;
-        }
-        else{
-            cout << "Not enough items in slot!" << endl;
-        }
+        return count - reserved_count;
     }
 
     // Inventory
     Inventory::Inventory(int count_slots){
         slots.resize(count_slots);
     }
-    ItemType Inventory::get_slot_type(int slot) const{
-        return slots[slot].get_type();
+    vector<Slot> Inventory::get_slots() const{
+        return slots;
     }
-    int Inventory::change_slot_type(int slot, ItemType new_type){
-        slots[slot].change_type(new_type);
+    void Inventory::set_type(int slot, ItemType type){
+        slots[slot].type = type;
     }
-    int Inventory::get_matching_slot(ItemType type) const{
-        for(vector<Slot>::const_iterator it = slots.begin(); it != slots.end(); ++it){
-            if(it->get_type() == type) return it - slots.begin();
-        }
-        return -1;
+    void Inventory::set_count(int slot, int count){
+        slots[slot].count = count;
+        slots[slot].reserved_count = 0;
     }
-    map<ItemType, int> Inventory::get_current_inventory() const{
+    void Inventory::dispense(int slot, int count){
+        slots[slot].count -= count;
+
+    }
+    void Inventory::reserve(int slot, int count){
+        slots[slot].reserved_count += count;
+    }
+    map<ItemType, int> Inventory::summarize_inventory() const{
         map<ItemType, int> curr_inventory;
 
         for(vector<Slot>::const_iterator it = slots.begin(); it != slots.end(); ++it){
             // If slot type already in map, combine them
-            map<ItemType, int>::iterator existing = curr_inventory.find(it->get_type());
+            map<ItemType, int>::iterator existing = curr_inventory.find(it->type);
             if(existing != curr_inventory.end()){
                 existing->second += it->get_count_available();
             }
             // Else, add a new entry for the type
             else{
-                curr_inventory.insert(pair<ItemType, int>(it->get_type(), it->get_count_available()));
+                curr_inventory.insert(pair<ItemType, int>(it->type, it->get_count_available()));
             }
         }
         return curr_inventory;
     };
-    void Inventory::set_count(int slot, int count){
-        int curr = slots[slot].get_count_total();
-        slots[slot].remove_items(curr);
-        slots[slot].add_items(count);
-    }
-    void Inventory::add(int slot, int count){
-        slots[slot].add_items(count);
-
-    }
-    void Inventory::remove(int slot, int count){
-        slots[slot].remove_items(count);
-
-    }
-    void Inventory::reserve(int slot, int count){
-        slots[slot].reserve(count);
-    }
 
     // Manager
     Manager::Manager(Inventory* inventory, Server* server){
@@ -199,7 +150,7 @@ namespace robie_inv{
             }
         }
         else if (input == "inv"){
-            map<ItemType, int> existing = inventory->get_current_inventory();
+            map<ItemType, int> existing = inventory->summarize_inventory();
             stringstream inv_ss;
 
             for(auto it = existing.begin(); it != existing.end(); ++it){
@@ -226,7 +177,7 @@ namespace robie_inv{
 
         // Double check order validity
         bool valid_order = true;
-        map<ItemType, int> existing = inventory->get_current_inventory();
+        map<ItemType, int> existing = inventory->summarize_inventory();
 
         // Make sure items match inventory
         for(map<ItemType, int>::iterator it = items.begin(); it != items.end(); ++it){
@@ -247,12 +198,16 @@ namespace robie_inv{
         }
 
         // If order is valid, reserve it
-        int slot;
+        // TODO: fix logic when two slots have same item
+        vector<Slot> slots = inventory->get_slots();
         if (valid_order){
-            for (map<ItemType, int>::iterator it = items.begin(); it != items.end(); ++it){
-                // TODO: fix logic when two slots have same item
-                slot = inventory->get_matching_slot(it->first);
-                inventory->reserve(slot, it->second);
+            for (auto it = items.begin(); it != items.end(); ++it){
+                for(int i; i < slots.size(); ++i){
+                    if(slots[i].type == it->first){
+                        inventory->reserve(i, it->second);
+                        break;
+                    }
+                }
             }
 
             // Add order to queue
@@ -274,7 +229,7 @@ namespace robie_inv{
             iarchive(slot_id, new_type, new_quant); // Read the data from the archive
         }
 
-        inventory->change_slot_type(slot_id, new_type);
+        inventory->set_type(slot_id, new_type);
         inventory->set_count(slot_id, new_quant);
 
         return "Inventory updated";
@@ -296,22 +251,27 @@ namespace robie_inv{
 
             map<ItemType, int> order = curr_order.get_order();
 
-            int slot;
+            vector<Slot> slots = inventory->get_slots();
             for (map<ItemType, int>::iterator it = order.begin(); it != order.end(); ++it){
-                slot = inventory->get_matching_slot(it->first);
 
-                // Dispense items
-                dispense_item(slot, it->second);
+                for(int i; i < slots.size(); ++i){
+                    if(slots[i].type == it->first){
+                        // Dispense items
+                        dispense_item(i, it->second);
 
-                // Subtract inventory
-                inventory->remove(slot, it->second);
+                        // Subtract inventory
+                        inventory->dispense(i, it->second);
 
-                // Unreserve quantities
-                inventory->reserve(slot, -it->second);
+                        // Unreserve quantities
+                        inventory->reserve(i, -it->second);
+
+                        break;
+                    }
+                }
             }
         }
 
-        map<ItemType, int> curr_inv = inventory->get_current_inventory();
+        map<ItemType, int> curr_inv = inventory->summarize_inventory();
 
         cout << "After processing queue, the inventory status is:" << endl;
         for (map<ItemType, int>::iterator it = curr_inv.begin(); it != curr_inv.end(); ++it){

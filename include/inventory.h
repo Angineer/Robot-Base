@@ -57,21 +57,15 @@ namespace robie_inv{
             void write_serial();
     };
 
-    class Slot
+    struct Slot
     {
-        private:
+        public:
             ItemType type;
             int count;
             int reserved_count;
-        public:
+        
             Slot();
-            void add_items(int quantity);
-            void change_type(ItemType new_type);
-            ItemType get_type() const;
             int get_count_available() const;
-            int get_count_total() const;
-            void remove_items(int quantity);
-            void reserve(int quantity);
     };
 
     class Inventory
@@ -81,16 +75,14 @@ namespace robie_inv{
         public:
             Inventory(int count_slots);
 
-            ItemType get_slot_type(int slot) const;
-            int change_slot_type(int slot, ItemType new_type);
-            int get_matching_slot(ItemType type) const; // Returns first slot that matches the provided type
-            
-            map<ItemType, int> get_current_inventory() const;
-
+            vector<Slot> get_slots() const;
+            void set_type(int slot, ItemType type);
             void set_count(int slot, int count);
-            void add(int slot, int count);
-            void remove(int slot, int count);
+
+            void dispense(int slot, int count);
             void reserve(int slot, int count);
+
+            map<ItemType, int> summarize_inventory() const;
     };
 
     class Manager
