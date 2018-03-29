@@ -11,15 +11,14 @@ int count_items = 1;
 
 void shutdown(int signum){
     client.disconnect();
-    cout << "\nStopping Admin Client" << endl;
+    cout << "Stopping Admin Client" << endl;
     exit(0);
 }
 
 void send_command(string command_str){
     robie_comm::Command command(command_str);
-    command.write_serial();
 
-    client.send(command);
+    cout << client.send(command) << endl;
 }
 
 void send_order(){
@@ -51,7 +50,6 @@ void send_order(){
 
     robie_inv::Order order(items);
 
-    order.write_serial();
     client.send(order);
 }
 
@@ -79,7 +77,7 @@ int main(int argc, char *argv[])
 
             getline(cin, user_input);
 
-            if (user_input == "status"){
+            if (user_input == "status" || user_input == "inv"){
                 send_command(user_input);
             }
             else if (user_input == "order") send_order();
@@ -87,13 +85,14 @@ int main(int argc, char *argv[])
             else if (user_input == "help"){
                 cout << "Available commands:" << endl;
                 cout << "status    Get robot status" << endl;
+                cout << "inv       Get current inventory" << endl;
                 cout << "order     Place a new order" << endl;
                 cout << "update    Update an item in the inventory" << endl;
                 cout << "help      Print this message" << endl;
+                cout << "exit      Quit" << endl;
             }
+            else if (user_input == "exit") shutdown(0);
             else cout << "Not recognized (type 'help' for commands)" << endl;
-
-            // cout << "Message sent" << endl;
         }
     }
 }

@@ -186,6 +186,16 @@ string Manager::handle_command(string input){
             default: return "Not ready";
         }
     }
+    else if (input == "inv"){
+        map<ItemType, int> existing = inventory->get_current_inventory();
+        stringstream inv_ss;
+
+        for(auto it = existing.begin(); it != existing.end(); ++it){
+            inv_ss << it->first.get_name() << ": " << it->second;
+            if(it != --existing.end()) inv_ss << "\n";
+        }
+        return inv_ss.str();
+    }
 
     return "Command not recognized";
 }
@@ -283,7 +293,7 @@ void Manager::run(){
 }
 void Manager::shutdown(){
     // TODO: save inventory to file
-    
+
     this->server->shutdown();
 }
 

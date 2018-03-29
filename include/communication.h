@@ -61,7 +61,7 @@ namespace robie_comm{
             Client(std::string host, int portno);
             void connect();
             void disconnect();
-            void send(const Message& message);
+            std::string send(Message& message);
     };
 
     class Server: public Socket{

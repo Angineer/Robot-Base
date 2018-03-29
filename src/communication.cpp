@@ -38,7 +38,8 @@ namespace robie_comm{
             std::cout << "ERROR connecting to server!" << std::endl;
         }
     }
-    void Client::send(const Message& message){
+    std::string Client::send(Message& message){
+        message.write_serial();
         std::string content = message.get_serial();
 
         // First send the message length
@@ -68,14 +69,15 @@ namespace robie_comm{
                 std::cout << "ERROR reading from socket!" << std::endl;
             }
             else if (n > 0){
-                // TODO: Do something with response
                 std::string response(buffer, len);
-                std::cout << "Response: " << response << std::endl;
+                return response;
             }
 
             // Clean up buffer
             delete[] buffer;
         }
+
+        return "ERROR";
     }
     void Client::disconnect(){
         close(sockfd);
@@ -149,8 +151,6 @@ namespace robie_comm{
         }
     }
     void Server::serve(std::function<int(std::string, std::string&)> callback_func){
-        //std::signal(SIGCHLD, SIG_IGN); // Let child processes fully die
-
         // Server runs forever
         std::cout << "Listening for connections" << std::endl;
         while (true){
@@ -171,21 +171,21 @@ namespace robie_comm{
     }
 
     std::string Message::get_serial() const{
-        return this->serial;
+        return serial;
     }
 
     Command::Command(std::string command){
         this->command = command;
     }
     void Command::write_serial(){
-        this->serial = "c" + this->command;
+        serial = "c" + command;
     }
 
     Status::Status(StatusCode status){
         this->status = status;
     }
     void Status::write_serial(){
-        this->serial = "s" + std::to_string(int(status));
+        serial = "s" + std::to_string(int(status));
     }
 
 } // robot_comm namespace
