@@ -292,9 +292,7 @@ void Manager::run(){
     server->serve(callback_func);
 }
 void Manager::shutdown(){
-    // TODO: save inventory to file
-
     this->server->shutdown();
 }
 
-}
+} // robie_inv namespace

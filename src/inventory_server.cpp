@@ -8,6 +8,8 @@
 
 using namespace std;
 
+std::string inv_file;
+
 void load_inventory(string file_path, robie_inv::Inventory& inv){
     ifstream in_file;
     string item;
@@ -32,8 +34,23 @@ void load_inventory(string file_path, robie_inv::Inventory& inv){
     }
 }
 
-void save_inventory(){
-    // TODO
+void save_inventory(string file_path, robie_inv::Inventory& inv){
+    ofstream out_file;
+
+    cout << "Saving inventory to config file..." << endl;
+
+    map<robie_inv::ItemType, int> curr_inv = inv.get_current_inventory();
+
+    out_file.open(file_path);
+    if (!out_file) {
+        cerr << "Error writing file " << file_path << endl;
+    }
+    else{
+        for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
+            out_file << it->first.get_name() << " " << it->second << endl;
+        }
+        out_file.close();
+    }
 }
 
 // Set up initial inventory with empty slots
@@ -46,17 +63,29 @@ robie_comm::Server server("localhost", UI_SOCKET);
 robie_inv::Manager manager(&base, &server);
 
 void shutdown(int signum){
+    std::cout << "Stopping Inventory Manager" << std::endl;
+
+    // Save inventory to file
+    save_inventory(inv_file, base);
+
     manager.shutdown();
-    std::cout << "\nStopping Inventory Manager" << std::endl;
+
     exit(0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if(argc > 1){
+        inv_file = argv[1];
+    }
+    else{
+        inv_file = "/home/andy/robie.inv";
+    } 
+
     std::cout << "Starting Inventory Manager" << std::endl;
 
     // Load initial inventory settings from file
-    load_inventory("/home/andy/Desktop/git/Robot-Base/inventory.conf", base);
+    load_inventory(inv_file, base);
 
     // Kill manager gracefully on ctrl+c
     std::signal(SIGINT, shutdown);
