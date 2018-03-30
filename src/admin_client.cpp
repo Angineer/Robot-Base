@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
                 cout << "status    Get robot status" << endl;
                 cout << "inv       Get current inventory" << endl;
                 cout << "order     Place a new order" << endl;
-                cout << "update    Update the inventory configuration" << endl;
+                cout << "update    Update an individual slot" << endl;
                 cout << "help      Print this message" << endl;
                 cout << "exit      Quit" << endl;
             }

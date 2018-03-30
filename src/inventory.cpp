@@ -127,8 +127,13 @@ namespace robie_inv{
             response = handle_command(message);
         }
         else if (code == 'o'){
-            handle_order(message);
-            response = "Order received";
+            bool check = handle_order(message);
+            if (check){
+                response = "Order placed";
+            }
+            else{
+                response = "Could not place order";
+            }
         }
         else if (code == 'u'){
             response = handle_update(message);
@@ -150,11 +155,11 @@ namespace robie_inv{
             }
         }
         else if (input == "inv"){
-            map<ItemType, int> existing = inventory->summarize_inventory();
+            vector<Slot> existing = inventory->get_slots();
             stringstream inv_ss;
 
             for(auto it = existing.begin(); it != existing.end(); ++it){
-                inv_ss << it->first.get_name() << ": " << it->second;
+                inv_ss << it - existing.begin() << ": " << it->type.get_name() << ", " << it->count << ", " << it->reserved_count;
                 if(it != --existing.end()) inv_ss << "\n";
             }
             return inv_ss.str();
@@ -162,7 +167,7 @@ namespace robie_inv{
 
         return "Command not recognized";
     }
-    void Manager::handle_order(string input){
+    bool Manager::handle_order(string input){
         cout << "Processing order..." << endl;
 
         // Read in new order
@@ -198,14 +203,37 @@ namespace robie_inv{
         }
 
         // If order is valid, reserve it
-        // TODO: fix logic when two slots have same item
-        vector<Slot> slots = inventory->get_slots();
         if (valid_order){
+            vector<Slot> slots = inventory->get_slots();
+
+            int remaining, available;
+            int start;
             for (auto it = items.begin(); it != items.end(); ++it){
-                for(int i; i < slots.size(); ++i){
-                    if(slots[i].type == it->first){
-                        inventory->reserve(i, it->second);
-                        break;
+
+                remaining = it->second;
+                start = 0;
+
+                // Loop through slots until this part of the order is fully reserved
+                while(remaining > 0){
+                    for(int i = start; i < slots.size(); ++i){
+
+                        // If we find a slot that matches, try to reserve there
+                        if(slots[i].type == it->first){
+                            start = i + 1;
+                            available = slots[i].get_count_available();
+
+                            // If sufficient items available, reserve remaining component here
+                            if(available >= remaining){
+                                inventory->reserve(i, remaining);
+                                remaining = 0;
+                            }
+                            // Otherwise, reserve as much as we can and go to next slot
+                            else{
+                                inventory->reserve(i, available);
+                                remaining -= available;
+                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -215,6 +243,8 @@ namespace robie_inv{
 
             cout << "New order placed!" << endl;
         }
+
+        return valid_order;
     }
     string Manager::handle_update(string input){
         // Read in new order
@@ -252,20 +282,37 @@ namespace robie_inv{
             map<ItemType, int> order = curr_order.get_order();
 
             vector<Slot> slots = inventory->get_slots();
-            for (map<ItemType, int>::iterator it = order.begin(); it != order.end(); ++it){
 
-                for(int i; i < slots.size(); ++i){
-                    if(slots[i].type == it->first){
-                        // Dispense items
-                        dispense_item(i, it->second);
+            int remaining, available;
+            int start;
+            for (auto it = order.begin(); it != order.end(); ++it){
 
-                        // Subtract inventory
-                        inventory->dispense(i, it->second);
+                remaining = it->second;
+                start = 0;
 
-                        // Unreserve quantities
-                        inventory->reserve(i, -it->second);
+                // Loop through slots until we find enough reserved items to fulfill this component
+                while(remaining > 0){
+                    for(int i = start; i < slots.size(); ++i){
 
-                        break;
+                        // If we find a slot that matches, try to dispense from there
+                        if(slots[i].type == it->first){
+                            start = i + 1;
+                            available = slots[i].reserved_count;
+
+                            // If sufficient items available, dispense remaining component from here
+                            if(available >= remaining){
+                                inventory->dispense(i, remaining);
+                                inventory->reserve(i, -remaining);
+                                remaining = 0;
+                            }
+                            // Otherwise, dispense as much as we can and go to next slot
+                            else{
+                                inventory->dispense(i, available);
+                                inventory->reserve(i, -available);
+                                remaining -= available;
+                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -275,7 +322,7 @@ namespace robie_inv{
 
         cout << "After processing queue, the inventory status is:" << endl;
         for (map<ItemType, int>::iterator it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            cout << it->first.get_name() << " has " << it->second << endl;
+            cout << it->second << " x " << it->first.get_name() << endl;
         }
     }
     void Manager::run(){

@@ -96,7 +96,7 @@ namespace robie_inv{
             void dispense_item(int slot, float quantity);
             int handle_input(string input, string& response);
             string handle_command(string input);
-            void handle_order(string input);
+            bool handle_order(string input);
             string handle_update(string input);
             StatusCode get_status();
             void process_queue();

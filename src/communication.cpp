@@ -151,8 +151,9 @@ namespace robie_comm{
         }
     }
     void Server::serve(std::function<int(std::string, std::string&)> callback_func){
-        // Server runs forever
         std::cout << "Listening for connections" << std::endl;
+        
+        // Server runs forever
         while (true){
             listen(sockfd, 5);
             clilen = sizeof(cli_addr);

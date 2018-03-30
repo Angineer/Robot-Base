@@ -39,7 +39,7 @@ void save_inventory(string file_path, robie_inv::Inventory& inv){
 
     cout << "Saving inventory to config file..." << endl;
 
-    map<robie_inv::ItemType, int> curr_inv = inv.summarize_inventory();
+    vector<robie_inv::Slot> curr_inv = inv.get_slots();
 
     out_file.open(file_path);
     if (!out_file) {
@@ -47,7 +47,7 @@ void save_inventory(string file_path, robie_inv::Inventory& inv){
     }
     else{
         for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            out_file << it->first.get_name() << " " << it->second << endl;
+            out_file << it->type.get_name() << " " << it->count << endl;
         }
         out_file.close();
     }
