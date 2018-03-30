@@ -164,6 +164,18 @@ namespace robie_inv{
             }
             return inv_ss.str();
         }
+        else if (input == "summary"){
+            map<ItemType, int> existing = inventory->summarize_inventory();
+            stringstream inv_ss;
+
+            inv_ss << "<table style='text-align:center; margin-left:auto; margin-right:auto;'>";
+            for(auto it = existing.begin(); it != existing.end(); ++it){
+                inv_ss << "<tr><td>" << it->second << "</td><td>" << it->first.get_name() << "</tr>";
+                if(it != --existing.end()) inv_ss << "\n";
+            }
+            inv_ss << "</table>";
+            return inv_ss.str();
+        }
 
         return "Command not recognized";
     }
