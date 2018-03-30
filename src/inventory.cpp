@@ -168,12 +168,11 @@ namespace robie_inv{
             map<ItemType, int> existing = inventory->summarize_inventory();
             stringstream inv_ss;
 
-            inv_ss << "<table style='text-align:center; margin-left:auto; margin-right:auto;'>";
             for(auto it = existing.begin(); it != existing.end(); ++it){
-                inv_ss << "<tr><td>" << it->second << "</td><td>" << it->first.get_name() << "</tr>";
+                inv_ss << it->second << " " << it->first.get_name();
                 if(it != --existing.end()) inv_ss << "\n";
             }
-            inv_ss << "</table>";
+
             return inv_ss.str();
         }
 
