@@ -1,7 +1,8 @@
 #ifndef INVENTORY_H
 #define INVENTORY_H
 
-#include <functional>
+#include "communication.h"
+
 #include <iostream>
 #include <map>
 #include <netinet/in.h>
@@ -12,11 +13,10 @@
 #include <unistd.h>
 #include <vector>
 
-#include "communication.h"
-
 using namespace std;
 
 namespace robie_inv{
+    using robie_comm::BluetoothLink;
     using robie_comm::Message;
     using robie_comm::Server;
     using robie_comm::StatusCode;
@@ -90,6 +90,7 @@ namespace robie_inv{
         private:
             Inventory* inventory;
             Server* server;
+            BluetoothLink bl_link;
             deque<Order> queue;
             StatusCode status;
 
@@ -100,6 +101,7 @@ namespace robie_inv{
             string handle_update(string input);
             StatusCode get_status();
             void process_queue();
+            void listen_heartbeat();
         public:
             Manager(Inventory* inventory, Server* server);
             void run();

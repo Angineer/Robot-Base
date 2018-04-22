@@ -12,6 +12,50 @@
 
 namespace robie_comm{
 
+    StatusCode string_to_status(std::string input){
+        if(input == "battery_low") return StatusCode::battery_low;
+        if(input == "unavailable") return StatusCode::unavailable;
+        if(input == "ready") return StatusCode::ready;
+        if(input == "delivering") return StatusCode::delivering;
+        if(input == "waiting") return StatusCode::waiting;
+        if(input == "returning") return StatusCode::returning;
+        if(input == "dispensing") return StatusCode::dispensing;
+
+        return StatusCode::unknown;
+    }
+
+    std::string status_to_string(StatusCode input){
+        switch(input){
+            case StatusCode::battery_low: return "battery_low";
+            case StatusCode::unavailable: return "unavailable";
+            case StatusCode::ready: return "ready";
+            case StatusCode::delivering: return "delivering";
+            case StatusCode::waiting: return "waiting";
+            case StatusCode::returning: return "returning";
+            case StatusCode::dispensing: return "dispensing";
+
+            default: return "unknown";
+        }
+    }
+
+    BluetoothLink::BluetoothLink(){
+        //foo
+    }
+    void BluetoothLink::connect(){
+        std::cout << "Establishing bluetooth connection..." << std::endl;
+    }
+    void BluetoothLink::disconnect(){
+        std::cout << "Stopping bluetooth connection..." << std::endl;
+    }
+    int BluetoothLink::send(std::string message){
+        std::cout << "Sending message over bluetooth..." << std::endl;
+        return 0;
+    }
+    int BluetoothLink::receive(){
+        std::cout << "Receiving message over bluetooth..." << std::endl;
+        return 0;
+    }
+
     Socket::Socket(std::string host, int portno){
         portno = portno;
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -30,13 +74,15 @@ namespace robie_comm{
         server = gethostbyname(host.c_str());
         bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     }
-    void Client::connect(){
+    int Client::connect(){
 
         int connect_success = ::connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
 
         if (connect_success < 0){
             std::cout << "ERROR connecting to server!" << std::endl;
         }
+
+        return connect_success;
     }
     std::string Client::send(Message& message){
         message.write_serial();

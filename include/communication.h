@@ -1,7 +1,6 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#include <csignal>
 #include <functional>
 #include <netinet/in.h>
 #include <string>
@@ -18,6 +17,19 @@ namespace robie_comm{
         waiting = 2,
         returning = 3,
         dispensing = 4
+    };
+
+    StatusCode string_to_status(std::string input);
+    std::string status_to_string(StatusCode input);
+
+    class BluetoothLink{
+        public:
+            BluetoothLink();
+            
+            void connect();
+            void disconnect();
+            int send(std::string message);
+            int receive();
     };
 
     class Message{
@@ -59,7 +71,7 @@ namespace robie_comm{
             struct hostent *server;
         public:
             Client(std::string host, int portno);
-            void connect();
+            int connect();
             void disconnect();
             std::string send(Message& message);
     };

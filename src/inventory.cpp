@@ -6,6 +6,8 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
+#include <thread>
+
 using robie_comm::StatusCode;
 
 namespace robie_inv{
@@ -115,6 +117,14 @@ namespace robie_inv{
         // Set up inventory
         this->inventory = inventory;
         this->server = server;
+        this->status = StatusCode::unknown;
+
+        // Establish bluetooth link
+        bl_link.connect();
+
+        // Start heartbeat monitor thread
+        thread t(bind(&Manager::listen_heartbeat, this));
+        t.detach();
     }
     void Manager::dispense_item(int slot, float quantity){
         cout << "Dispensing item!" << endl;
@@ -149,10 +159,7 @@ namespace robie_inv{
     }
     string Manager::handle_command(string input){
         if (input == "status"){
-            switch(status){
-                case(StatusCode::ready): return "Ready"; break;
-                default: return "Not ready";
-            }
+            return(robie_comm::status_to_string(status));
         }
         else if (input == "inv"){
             vector<Slot> existing = inventory->get_slots();
@@ -286,6 +293,9 @@ namespace robie_inv{
 
             cout << "Processing queue with size " << queue.size() << "..." << endl;
 
+            status = StatusCode::dispensing;
+            bl_link.send("order");
+
             // Pop first order off queue
             Order curr_order = queue.front();
             queue.pop_front();
@@ -327,13 +337,12 @@ namespace robie_inv{
                     }
                 }
             }
-        }
+            map<ItemType, int> curr_inv = inventory->summarize_inventory();
 
-        map<ItemType, int> curr_inv = inventory->summarize_inventory();
-
-        cout << "After processing queue, the inventory status is:" << endl;
-        for (map<ItemType, int>::iterator it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            cout << it->second << " x " << it->first.get_name() << endl;
+            cout << "After processing queue, the inventory status is:" << endl;
+            for (map<ItemType, int>::iterator it = curr_inv.begin(); it != curr_inv.end(); ++it){
+                cout << it->second << " x " << it->first.get_name() << endl;
+            }
         }
     }
     void Manager::run(){
@@ -345,7 +354,29 @@ namespace robie_inv{
         server->serve(callback_func);
     }
     void Manager::shutdown(){
+        bl_link.disconnect();
         this->server->shutdown();
     }
+    void Manager::listen_heartbeat(){
+        bool temp = true;
 
+        // Check in with robie at 1 Hz
+        while(true){
+            this_thread::sleep_for(chrono::seconds(5));
+
+            bl_link.receive();
+
+            // If status changed, process queue
+            if (temp){
+                status = StatusCode::ready;
+            }
+            else{
+                status = StatusCode::unavailable;
+            }
+            temp = !temp;
+
+            cout << "Status changed to " << robie_comm::status_to_string(status) << endl;
+            process_queue();
+        }
+    }
 } // robie_inv namespace

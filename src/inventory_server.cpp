@@ -1,14 +1,16 @@
 #include "../include/communication.h"
 #include "../include/inventory.h"
+
+#include <csignal>
 #include <fstream>
+#include <chrono>
 
 #define UI_SOCKET 5000
-#define DP_SOCKET 5001
 #define INV_SIZE 3 // How many physical slots in inventory
 
 using namespace std;
 
-std::string inv_file;
+string inv_file;
 
 void load_inventory(string file_path, robie_inv::Inventory& inv){
     ifstream in_file;

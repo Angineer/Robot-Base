@@ -2,6 +2,7 @@
 #include "../include/inventory.h"
 
 #include <algorithm>
+#include <csignal>
 #include <iostream>
 
 using namespace std;
@@ -77,15 +78,14 @@ int main(int argc, char *argv[])
 
     string user_input;
 
-    while (true){
-        cout << "Connecting to inventory server..." << endl;
-        client.connect();
-        bool connect = true;
+    cout << "Connecting to inventory server..." << endl;
+    int success = client.connect();
 
+    if(success == 0){
         cout << "===================\n";
         cout << "Robie Admin Console\n";
         cout << "===================\n";
-        while (connect){
+        while (true){
             cout << "admin@robie: ";
 
             getline(cin, user_input);
