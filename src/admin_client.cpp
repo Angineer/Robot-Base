@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
     signal(SIGINT, shutdown);
 
     string user_input;
+    string last_input;
 
     cout << "Connecting to inventory server..." << endl;
     int success = client.connect();
@@ -90,13 +91,16 @@ int main(int argc, char *argv[])
 
             getline(cin, user_input);
 
+            if(user_input == "") user_input = last_input;
+            last_input = user_input;
+
             if (user_input == "status" || user_input == "inv"){
                 send_command(user_input);
             }
             else if (user_input == "order") send_order();
             else if (user_input == "update") send_update();
             else if (user_input == "help"){
-                cout << "Available commands:" << endl;
+                cout << "Available commands (enter key will repeat last command):" << endl;
                 cout << "status    Get robot status" << endl;
                 cout << "inv       Get current inventory" << endl;
                 cout << "order     Place a new order" << endl;

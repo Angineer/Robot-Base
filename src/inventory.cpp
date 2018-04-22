@@ -362,11 +362,12 @@ namespace robie_inv{
 
         // Check in with robie at 1 Hz
         while(true){
-            this_thread::sleep_for(chrono::seconds(5));
+            this_thread::sleep_for(chrono::seconds(2));
 
             bl_link.receive();
 
             // If status changed, process queue
+            /*
             if (temp){
                 status = StatusCode::ready;
             }
@@ -376,6 +377,7 @@ namespace robie_inv{
             temp = !temp;
 
             cout << "Status changed to " << robie_comm::status_to_string(status) << endl;
+            */
             process_queue();
         }
     }
