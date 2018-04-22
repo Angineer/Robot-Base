@@ -6,7 +6,9 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
+#include <fcntl.h>
 #include <thread>
+#include <termios.h>
 
 using robie_comm::StatusCode;
 
@@ -74,8 +76,61 @@ namespace robie_inv{
         return count - reserved_count;
     }
 
+    // Motor Controller
+    MotorController::MotorController(int count_motors){
+        this->count_motors = count_motors;
+        int fd; // Serial port file descriptor
+        fd = this->connect();
+    }
+    MotorController::~MotorController(){
+        disconnect();
+    }
+    int MotorController::connect(){
+        int fd = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
+        if (fd == -1){
+            std::cout << "Unable to connect to motor controller" << std::endl;
+        }
+        else{
+            fcntl(fd, F_SETFL, 0);
+            std::cout << "Motor controller connected" << std::endl;
+        }
+
+        // Set serial port options
+        struct termios options;
+
+        // Get current options
+        tcgetattr(fd, &options);
+
+        // Set baud rate
+        cfsetispeed(&options, B19200);
+        cfsetospeed(&options, B19200);
+
+        // 8N1
+        options.c_cflag &= ~PARENB;
+        options.c_cflag &= ~CSTOPB;
+        options.c_cflag &= ~CSIZE;
+        options.c_cflag |= CS8;
+
+        /* set the options */
+        tcsetattr(fd, TCSANOW, &options);
+  
+        return (fd);
+    }
+    int MotorController::disconnect(){
+        close(fd);
+    }
+    void MotorController::dispense(int slot, int count){
+        if(fd > 0){
+            std::string message = "f" + slot + count;
+            int n = write(fd, message.c_str(), message.size());
+        }
+        else{
+            cout << "Motor controller disconnected!" << endl;
+        }
+    }
+
     // Inventory
-    Inventory::Inventory(int count_slots){
+    Inventory::Inventory(int count_slots): controller(count_slots){
         slots.resize(count_slots);
     }
     vector<Slot> Inventory::get_slots() const{
@@ -90,7 +145,7 @@ namespace robie_inv{
     }
     void Inventory::dispense(int slot, int count){
         slots[slot].count -= count;
-
+        controller.dispense(slot, count);
     }
     void Inventory::reserve(int slot, int count){
         slots[slot].reserved_count += count;
@@ -125,9 +180,6 @@ namespace robie_inv{
         // Start heartbeat monitor thread
         thread t(bind(&Manager::listen_heartbeat, this));
         t.detach();
-    }
-    void Manager::dispense_item(int slot, float quantity){
-        cout << "Dispensing item!" << endl;
     }
     int Manager::handle_input(string input, string& response){
         char code = input[0];
@@ -369,7 +421,9 @@ namespace robie_inv{
             // If status changed, process queue
             /*
             if (temp){
+            */
                 status = StatusCode::ready;
+            /*
             }
             else{
                 status = StatusCode::unavailable;

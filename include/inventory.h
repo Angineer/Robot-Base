@@ -68,10 +68,24 @@ namespace robie_inv{
             int get_count_available() const;
     };
 
+    class MotorController{
+        int count_motors;
+        int fd;
+        int connect();
+        int disconnect();
+
+        public:
+            MotorController(int count_motors);
+            ~MotorController();
+
+            void dispense(int slot, int count);
+    };
+
     class Inventory
     {
         private:
             vector<Slot> slots;
+            MotorController controller;
         public:
             Inventory(int count_slots);
 
@@ -94,7 +108,6 @@ namespace robie_inv{
             deque<Order> queue;
             StatusCode status;
 
-            void dispense_item(int slot, float quantity);
             int handle_input(string input, string& response);
             string handle_command(string input);
             bool handle_order(string input);
@@ -102,6 +115,7 @@ namespace robie_inv{
             StatusCode get_status();
             void process_queue();
             void listen_heartbeat();
+
         public:
             Manager(Inventory* inventory, Server* server);
             void run();
