@@ -3,6 +3,9 @@
 
 #include <string>
 
+#include "communication/Message.h"
+#include "communication/Socket.h"
+
 class Client: public Socket{
     private:
         struct hostent *server;

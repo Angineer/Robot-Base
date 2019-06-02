@@ -1,6 +1,8 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include <string>
+
 class Message{
     protected:
         std::string serial;

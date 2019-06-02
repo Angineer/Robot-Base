@@ -1,5 +1,8 @@
 #include "communication/Socket.h"
 
+#include <iostream>
+#include <strings.h>
+
 Socket::Socket(std::string host, int portno){
     portno = portno;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);

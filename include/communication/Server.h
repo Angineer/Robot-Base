@@ -6,7 +6,15 @@
 #include <string>
 #include <string.h>
 
-class Server: public Socket{
+#include "communication/Socket.h"
+
+class Server: public Socket
+{
+    public:
+        Server(std::string host, int portno);
+        void serve(std::function<int(std::string, std::string&)> callback_func);
+        void shutdown();
+
     private:
         struct sockaddr_in cli_addr;
         socklen_t clilen;
@@ -15,10 +23,6 @@ class Server: public Socket{
         void child_serve ( int sockfd,
                            std::function<int(std::string, std::string&)>
                                callback_func );
-    public:
-        Server(std::string host, int portno);
-        void serve(std::function<int(std::string, std::string&)> callback_func);
-        void shutdown();
 };
 
 #endif

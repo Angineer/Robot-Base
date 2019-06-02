@@ -1,74 +1,76 @@
-#include "../include/communication.h"
-#include "../include/inventory.h"
+#include "communication/Client.h"
+#include "communication/Command.h"
+#include "communication/Order.h"
+#include "communication/Update.h"
+#include "inventory/Snack.h"
 
 #include <algorithm>
 #include <csignal>
 #include <iostream>
+#include <map>
 
-using namespace std;
-
-robie_comm::Client client("localhost", 5000);
+Client client("localhost", 5000);
 
 void shutdown(int signum){
     client.disconnect();
-    cout << "Stopping Admin Client" << endl;
+    std::cout << "Stopping Admin Client" << std::endl;
     exit(0);
 }
 
-void send_command(string command_str){
-    robie_comm::Command command(command_str);
+void send_command(std::string command_str){
+    Command command(command_str);
 
-    cout << client.send(command) << endl;
+    std::cout << client.send(command) << std::endl;
 }
 
 void send_order(){
-    string user_input; // Reading directly from cin was giving me issues
+    std::string user_input; // Reading directly from cin was giving me issues
     int count_items;
-    string name;
+    std::string name;
     int quant;
-    map<robie_inv::ItemType, int> items;
+    std::map<Snack, int> items;
 
-    cout << "-----New order-----\n";
-    cout << "How many components? ";
-    getline(cin, user_input);
+    std::cout << "-----New order-----\n";
+    std::cout << "How many components? ";
+    getline(std::cin, user_input);
     count_items = stoi(user_input);
 
     for (int i=0; i<count_items; i++){
 
-        cout << "Item type: ";
-        getline(cin, name);
-        cout << "Quantity: ";
-        getline(cin, user_input);
+        std::cout << "Item type: ";
+        getline(std::cin, name);
+        std::cout << "Quantity: ";
+        getline(std::cin, user_input);
         quant = stoi(user_input);
 
-        robie_inv::ItemType type(name);
+        Snack type(name);
 
-        items.insert(pair<robie_inv::ItemType, int>(type, quant));
+        items.insert(std::pair<Snack, int>(type, quant));
     }
 
-    robie_inv::Order order(items);
+    Order order(items);
 
-    cout << client.send(order) << endl;
+    std::cout << client.send(order) << std::endl;
 }
 
 void send_update(){
-    string user_input; // Reading directly from cin was giving me issues
+    std::string user_input; // Reading directly from cin was giving me issues
     int slot_id;
-    string new_type;
+    std::string new_type;
     int new_quant;
 
-    cout << "which slot? ";
-    getline(cin, user_input);
+    std::cout << "which slot? ";
+    getline(std::cin, user_input);
     slot_id = stoi(user_input);
-    cout << "what type? ";
-    getline(cin, new_type);
-    cout << "how many? ";
-    getline(cin, user_input);
+    std::cout << "what type? ";
+    getline(std::cin, new_type);
+    std::cout << "how many? ";
+    getline(std::cin, user_input);
     new_quant = stoi(user_input);
 
-    robie_inv::Update update(slot_id, robie_inv::ItemType(new_type), new_quant);
+    Update update(slot_id, Snack(new_type), new_quant);
 
-    cout << client.send(update) << endl;
+    std::cout << client.send(update) << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -76,20 +78,20 @@ int main(int argc, char *argv[])
     // Kill client gracefully on ctrl+c
     signal(SIGINT, shutdown);
 
-    string user_input;
-    string last_input;
+    std::string user_input;
+    std::string last_input;
 
-    cout << "Connecting to inventory server..." << endl;
+    std::cout << "Connecting to inventory server..." << std::endl;
     int success = client.connect();
 
     if(success == 0){
-        cout << "===================\n";
-        cout << "Robie Admin Console\n";
-        cout << "===================\n";
+        std::cout << "===================\n";
+        std::cout << "Robie Admin Console\n";
+        std::cout << "===================\n";
         while (true){
-            cout << "admin@robie: ";
+            std::cout << "admin@robie: ";
 
-            getline(cin, user_input);
+            getline(std::cin, user_input);
 
             if(user_input == "") user_input = last_input;
             last_input = user_input;
@@ -100,16 +102,16 @@ int main(int argc, char *argv[])
             else if (user_input == "order") send_order();
             else if (user_input == "update") send_update();
             else if (user_input == "help"){
-                cout << "Available commands (enter key will repeat last command):" << endl;
-                cout << "status    Get robot status" << endl;
-                cout << "inv       Get current inventory" << endl;
-                cout << "order     Place a new order" << endl;
-                cout << "update    Update an individual slot" << endl;
-                cout << "help      Print this message" << endl;
-                cout << "exit      Quit" << endl;
+                std::cout << "Available commands (enter key will repeat last command):" << std::endl;
+                std::cout << "status    Get robot status" << std::endl;
+                std::cout << "inv       Get current inventory" << std::endl;
+                std::cout << "order     Place a new order" << std::endl;
+                std::cout << "update    Update an individual slot" << std::endl;
+                std::cout << "help      Print this message" << std::endl;
+                std::cout << "exit      Quit" << std::endl;
             }
             else if (user_input == "exit") shutdown(0);
-            else cout << "Not recognized (type 'help' for commands)" << endl;
+            else std::cout << "Not recognized (type 'help' for commands)" << std::endl;
         }
     }
 }

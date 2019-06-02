@@ -1,5 +1,9 @@
 #include "communication/Server.h"
 
+#include <iostream>
+#include <thread>
+#include <unistd.h>
+
 Server::Server(std::string host, int portno) : Socket(host, portno)
 {
     serv_addr.sin_addr.s_addr = INADDR_ANY;

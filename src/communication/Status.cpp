@@ -1,26 +1,26 @@
 #include "communication/Status.h"
 
 StatusCode string_to_status(std::string input){
-    if(input == "battery_low") return StatusCode::battery_low;
-    if(input == "unavailable") return StatusCode::unavailable;
-    if(input == "ready") return StatusCode::ready;
-    if(input == "delivering") return StatusCode::delivering;
-    if(input == "waiting") return StatusCode::waiting;
-    if(input == "returning") return StatusCode::returning;
-    if(input == "dispensing") return StatusCode::dispensing;
+    if(input == "battery_low") return StatusCode::BATTERY_LOW;
+    if(input == "unavailable") return StatusCode::UNAVAILABLE;
+    if(input == "ready") return StatusCode::READY;
+    if(input == "delivering") return StatusCode::DELIVERING;
+    if(input == "waiting") return StatusCode::WAITING;
+    if(input == "returning") return StatusCode::RETURNING;
+    if(input == "dispensing") return StatusCode::DISPENSING;
 
-    return StatusCode::unknown;
+    return StatusCode::UNKNOWN;
 }
 
 std::string status_to_string(StatusCode input){
     switch(input){
-        case StatusCode::battery_low: return "battery_low";
-        case StatusCode::unavailable: return "unavailable";
-        case StatusCode::ready: return "ready";
-        case StatusCode::delivering: return "delivering";
-        case StatusCode::waiting: return "waiting";
-        case StatusCode::returning: return "returning";
-        case StatusCode::dispensing: return "dispensing";
+        case StatusCode::BATTERY_LOW: return "battery_low";
+        case StatusCode::UNAVAILABLE: return "unavailable";
+        case StatusCode::READY: return "ready";
+        case StatusCode::DELIVERING: return "delivering";
+        case StatusCode::WAITING: return "waiting";
+        case StatusCode::RETURNING: return "returning";
+        case StatusCode::DISPENSING: return "dispensing";
 
         default: return "unknown";
     }

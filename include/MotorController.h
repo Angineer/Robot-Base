@@ -1,14 +1,16 @@
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H
 
+#include <string>
+
 class MotorController{
     int count_motors;
     int fd;
-    int connect();
+    int connect ( std::string device );
     int disconnect();
 
     public:
-        MotorController(int count_motors);
+        MotorController();
         ~MotorController();
 
         void dispense(int slot, int count);

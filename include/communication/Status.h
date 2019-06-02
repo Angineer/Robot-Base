@@ -2,23 +2,25 @@
 #define STATUS_H
 
 #include <string>
-#include <string.h>
 
-enum class StatusCode{
-    unknown = -99,
-    battery_low = -2,
-    unavailable = -1,
-    ready = 0,
-    delivering = 1,
-    waiting = 2,
-    returning = 3,
-    dispensing = 4
+#include "communication/Message.h"
+
+enum class StatusCode
+{
+    UNKNOWN = -99,
+    BATTERY_LOW = -2,
+    UNAVAILABLE = -1,
+    READY = 0,
+    DELIVERING = 1,
+    WAITING = 2,
+    RETURNING = 3,
+    DISPENSING = 4
 };
 
 StatusCode string_to_status(std::string input);
 std::string status_to_string(StatusCode input);
 
-class Status: public Message{
+class Status: public Message {
     private:
         StatusCode status;
     public:

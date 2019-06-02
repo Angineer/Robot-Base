@@ -1,6 +1,6 @@
 #include "communication/Command.h"
 
-Command::Command(std::string command){
+Command::Command(std::string command) {
     this->command = command;
 }
 void Command::write_serial(){

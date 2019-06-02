@@ -1,13 +1,15 @@
 #include "communication/Update.h"
 
-Update::Update(int slot_id, ItemType new_type, int new_quant){
+#include <sstream>
+
+Update::Update(int slot_id, Snack new_type, int new_quant){
     this->slot_id = slot_id;
     this->new_type = new_type;
     this->new_quant = new_quant;
 }
 
 void Update::write_serial(){
-    stringstream ss;
+    std::stringstream ss;
     {
         cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
 

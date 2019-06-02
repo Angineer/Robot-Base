@@ -1,21 +1,31 @@
 #include "BaseManager.h"
 
-BaseManager::BaseManager(Inventory* inventory, Server* server){
-    // Set up inventory
-    this->inventory = inventory;
-    this->server = server;
-    this->status = StatusCode::unknown;
+#include <chrono>
+#include <iostream>
+#include <functional>
+#include <sstream>
+#include <thread>
 
+#include "cereal/cereal.hpp"
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/map.hpp"
+
+BaseManager::BaseManager ( std::string inventory_file ) :
+    inventory ( inventory_file ),
+    server ( "localhost", 5000),
+    status ( StatusCode::UNKNOWN )
+{
     // Establish bluetooth link
     bl_link.connect();
 
     // Start heartbeat monitor thread
-    thread t(bind(&BaseManager::listen_heartbeat, this));
+    std::thread t(std::bind(&BaseManager::listen_heartbeat, this));
     t.detach();
 }
-int BaseManager::handle_input(string input, string& response){
+int BaseManager::handle_input(std::string input, std::string& response){
     char code = input[0];
-    string message = input.substr(1, string::npos);
+    std::string message = input.substr(1, std::string::npos);
 
     if (code == 'c'){
         response = handle_command(message);
@@ -41,26 +51,29 @@ int BaseManager::handle_input(string input, string& response){
 
     return 0;
 }
-string BaseManager::handle_command(string input){
-    if (input == "status"){
-        return(robie_comm::status_to_string(status));
-    }
-    else if (input == "inv"){
-        vector<Slot> existing = inventory->get_slots();
-        stringstream inv_ss;
+std::string BaseManager::handle_command ( std::string input ){
+    if ( input == "status" ){
+        return ( status_to_string ( status ) );
+    } else if (input == "inv"){
+        std::vector<Slot> existing = inventory.get_slots();
+        std::stringstream inv_ss;
 
-        for(auto it = existing.begin(); it != existing.end(); ++it){
-            inv_ss << it - existing.begin() << ": " << it->type.get_name() << ", " << it->count << ", " << it->reserved_count;
-            if(it != --existing.end()) inv_ss << "\n";
+        for ( auto it = existing.begin(); it != existing.end(); ++it ){
+            inv_ss << it - existing.begin()
+                   << ": " << it->get_type().get_name()
+                   << ", " << it->get_count()
+                   << ", " << it->get_count_available();
+            if ( it != --existing.end() ) inv_ss << "\n";
         }
         return inv_ss.str();
     }
     else if (input == "summary"){
-        map<ItemType, int> existing = inventory->summarize_inventory();
-        stringstream inv_ss;
+        std::map<Snack, int> existing = inventory.summarize_inventory();
+        std::stringstream inv_ss;
 
-        for(auto it = existing.begin(); it != existing.end(); ++it){
-            inv_ss << it->second << " " << it->first.get_name();
+        for ( auto it = existing.begin(); it != existing.end(); ++it ){
+            inv_ss << it->second << " "
+                   << it->first.get_name();
             if(it != --existing.end()) inv_ss << "\n";
         }
 
@@ -69,12 +82,12 @@ string BaseManager::handle_command(string input){
 
     return "Command not recognized";
 }
-bool BaseManager::handle_order(string input){
-    cout << "Processing order..." << endl;
+bool BaseManager::handle_order(std::string input){
+    std::cout << "Processing order..." << std::endl;
 
     // Read in new order
-    stringstream ss(input);
-    map<ItemType, int> items;
+    std::stringstream ss(input);
+    std::map<Snack, int> items;
 
     {
         cereal::BinaryInputArchive iarchive(ss); // Create an input archive
@@ -84,21 +97,26 @@ bool BaseManager::handle_order(string input){
 
     // Double check order validity
     bool valid_order = true;
-    map<ItemType, int> existing = inventory->summarize_inventory();
+    std::map<Snack, int> existing = inventory.summarize_inventory();
 
     // Make sure items match inventory
-    for(map<ItemType, int>::iterator it = items.begin(); it != items.end(); ++it){
+    for ( auto it = items.begin(); it != items.end(); ++it ){
 
-        map<ItemType, int>::iterator item_in_inv = existing.find(it->first);
+        auto item_in_inv = existing.find ( it->first );
 
-        if(item_in_inv == existing.end()){
-            cout << "Order contains item not in inventory: " << it->first.get_name() << "!" << endl;
+        if ( item_in_inv == existing.end() ){
+            std::cout << "Order contains item not in inventory: "
+                      << it->first.get_name() << "!" << std::endl;
             valid_order = false;
             break;
         }
         if(item_in_inv->second < it->second){
-            cout << "Insufficient quantity available: " + it->first.get_name() + "!" << endl;
-            cout << "Asked for " << it->second << ", but inventory has " << item_in_inv->second << endl;
+            std::cout << "Insufficient quantity available: "
+                      << it->first.get_name()
+                      << "!" << std::endl;
+            std::cout << "Asked for " << it->second
+                      << ", but inventory has " << item_in_inv->second
+                      << std::endl;
             valid_order = false;
             break;
         }
@@ -106,7 +124,7 @@ bool BaseManager::handle_order(string input){
 
     // If order is valid, reserve it
     if (valid_order){
-        vector<Slot> slots = inventory->get_slots();
+        std::vector<Slot> slots = inventory.get_slots();
 
         int remaining, available;
         int start;
@@ -120,18 +138,18 @@ bool BaseManager::handle_order(string input){
                 for(int i = start; i < slots.size(); ++i){
 
                     // If we find a slot that matches, try to reserve there
-                    if(slots[i].type == it->first){
+                    if ( slots[i].get_type().get_name() == it->first.get_name() ){
                         start = i + 1;
                         available = slots[i].get_count_available();
 
                         // If sufficient items available, reserve remaining component here
                         if(available >= remaining){
-                            inventory->reserve(i, remaining);
+                            inventory.reserve(i, remaining);
                             remaining = 0;
                         }
                         // Otherwise, reserve as much as we can and go to next slot
                         else{
-                            inventory->reserve(i, available);
+                            inventory.reserve(i, available);
                             remaining -= available;
                         }
                         break;
@@ -143,16 +161,16 @@ bool BaseManager::handle_order(string input){
         // Add order to queue
         queue.emplace_back(items);
 
-        cout << "New order placed!" << endl;
+        std::cout << "New order placed!" << std::endl;
     }
 
     return valid_order;
 }
-string BaseManager::handle_update(string input){
+std::string BaseManager::handle_update(std::string input){
     // Read in new order
-    stringstream ss(input);
+    std::stringstream ss(input);
     int slot_id;
-    ItemType new_type;
+    Snack new_type;
     int new_quant;
 
     {
@@ -161,8 +179,8 @@ string BaseManager::handle_update(string input){
         iarchive(slot_id, new_type, new_quant); // Read the data from the archive
     }
 
-    inventory->set_type(slot_id, new_type);
-    inventory->set_count(slot_id, new_quant);
+    inventory.set_type ( slot_id, new_type );
+    inventory.add ( slot_id, new_quant );
 
     return "Inventory updated";
 }
@@ -173,20 +191,20 @@ void BaseManager::process_queue(){
     // First, check current status
     // If robot is occupied, do nothing
     // If robot is ready to go and queue has orders, start processing them
-    if (status == StatusCode::ready && queue.size() > 0){
+    if (status == StatusCode::READY && queue.size() > 0){
 
-        cout << "Processing queue with size " << queue.size() << "..." << endl;
+        std::cout << "Processing queue with size " << queue.size() << "..." << std::endl;
 
-        status = StatusCode::dispensing;
+        status = StatusCode::DISPENSING;
         bl_link.send("order");
 
         // Pop first order off queue
         Order curr_order = queue.front();
         queue.pop_front();
 
-        map<ItemType, int> order = curr_order.get_order();
+        std::map<Snack, int> order = curr_order.get_order();
 
-        vector<Slot> slots = inventory->get_slots();
+        std::vector<Slot> slots = inventory.get_slots();
 
         int remaining, available;
         int start;
@@ -200,20 +218,20 @@ void BaseManager::process_queue(){
                 for(int i = start; i < slots.size(); ++i){
 
                     // If we find a slot that matches, try to dispense from there
-                    if(slots[i].type == it->first){
+                    if ( slots[i].get_type().get_name() == it->first.get_name() ){
                         start = i + 1;
-                        available = slots[i].reserved_count;
+                        available = slots[i].get_count_available();
 
                         // If sufficient items available, dispense remaining component from here
                         if(available >= remaining){
-                            inventory->dispense(i, remaining);
-                            inventory->reserve(i, -remaining);
+                            inventory.dispense(i, remaining);
+                            inventory.reserve(i, -remaining);
                             remaining = 0;
                         }
                         // Otherwise, dispense as much as we can and go to next slot
                         else{
-                            inventory->dispense(i, available);
-                            inventory->reserve(i, -available);
+                            inventory.dispense(i, available);
+                            inventory.reserve(i, -available);
                             remaining -= available;
                         }
                         break;
@@ -221,32 +239,34 @@ void BaseManager::process_queue(){
                 }
             }
         }
-        map<ItemType, int> curr_inv = inventory->summarize_inventory();
+        std::map<Snack, int> curr_inv = inventory.summarize_inventory();
 
-        cout << "After processing queue, the inventory status is:" << endl;
-        for (map<ItemType, int>::iterator it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            cout << it->second << " x " << it->first.get_name() << endl;
+        std::cout << "After processing queue, the inventory status is:" << std::endl;
+        for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
+            std::cout << it->second << " x " << it->first.get_name() << std::endl;
         }
     }
 }
 void BaseManager::run(){
 
     // Create callback function that can be passed as argument
-    function<int(string, string&)> callback_func(bind(&BaseManager::handle_input, this, placeholders::_1, placeholders::_2));
+    std::function<int ( std::string, std::string& )> callback_func (
+            bind ( &BaseManager::handle_input, this,
+                   std::placeholders::_1, std::placeholders::_2 ) );
 
     // Run server and process callbacks
-    server->serve(callback_func);
+    server.serve(callback_func);
 }
 void BaseManager::shutdown(){
     bl_link.disconnect();
-    this->server->shutdown();
+    server.shutdown();
 }
 void BaseManager::listen_heartbeat(){
     bool temp = true;
 
     // Check in with robie at 1 Hz
     while(true){
-        this_thread::sleep_for(chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
         //bl_link.receive();
 
@@ -254,7 +274,7 @@ void BaseManager::listen_heartbeat(){
         /*
         if (temp){
         */
-            status = StatusCode::ready;
+            status = StatusCode::READY;
         /*
         }
         else{
@@ -262,7 +282,7 @@ void BaseManager::listen_heartbeat(){
         }
         temp = !temp;
 
-        cout << "Status changed to " << robie_comm::status_to_string(status) << endl;
+        cout << "Status changed to " << status_to_string(status) << endl;
         */
         process_queue();
     }

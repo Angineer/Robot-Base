@@ -1,5 +1,7 @@
 #include "communication/BluetoothLink.h"
 
+#include <iostream>
+
 BluetoothLink::BluetoothLink(){
     //foo
 }

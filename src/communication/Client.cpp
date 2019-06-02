@@ -1,5 +1,10 @@
 #include "communication/Client.h"
 
+#include <iostream>
+#include <netdb.h>
+#include <string.h>
+#include <unistd.h>
+
 Client::Client(std::string host, int portno) : Socket(host, portno)
 {
     server = gethostbyname(host.c_str());
@@ -21,12 +26,12 @@ std::string Client::send(Message& message){
 
     // First send the message length
     int len = content.length();
-    n = ::write(sockfd, &len, sizeof(len));
+    n = write(sockfd, &len, sizeof(len));
     if (n < 0)
          std::cout << "ERROR writing to socket" << std::endl;
 
     // Then send the actual message
-    n = ::write(sockfd, content.c_str(), len);
+    n = write(sockfd, content.c_str(), len);
     if (n < 0)
          std::cout << "ERROR writing to socket" << std::endl;
 
