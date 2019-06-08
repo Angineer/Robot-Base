@@ -14,23 +14,26 @@
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( "localhost", 5000),
-    status ( StatusCode::UNKNOWN )
+    state ( State::IDLE )
 {
     // Establish bluetooth link
     bl_link.connect();
 
     // Start heartbeat monitor thread
-    std::thread t(std::bind(&BaseManager::listen_heartbeat, this));
+    std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
     t.detach();
 }
-int BaseManager::handle_input(std::string input, std::string& response){
+
+std::string BaseManager::handle_input ( std::string input ){
     char code = input[0];
     std::string message = input.substr(1, std::string::npos);
+    std::string response;
+
+    std::lock_guard<std::mutex> lock ( access_mutex );
 
     if (code == 'c'){
         response = handle_command(message);
-    }
-    else if (code == 'o'){
+    } else if (code == 'o'){
         bool check = handle_order(message);
         if (check){
             response = "Order placed";
@@ -38,22 +41,20 @@ int BaseManager::handle_input(std::string input, std::string& response){
         else{
             response = "Could not place order";
         }
-    }
-    else if (code == 'u'){
+    } else if (code == 'u'){
         response = handle_update(message);
-    }
-    else{
+    } else{
         response = "Unrecognized input!";
-        return 1;
     }
 
     process_queue();
 
-    return 0;
+    return response;
 }
-std::string BaseManager::handle_command ( std::string input ){
+
+std::string BaseManager::handle_command ( std::string input ) {
     if ( input == "status" ){
-        return ( status_to_string ( status ) );
+        return "Not implemented yet";
     } else if (input == "inv"){
         std::vector<Slot> existing = inventory.get_slots();
         std::stringstream inv_ss;
@@ -66,8 +67,7 @@ std::string BaseManager::handle_command ( std::string input ){
             if ( it != --existing.end() ) inv_ss << "\n";
         }
         return inv_ss.str();
-    }
-    else if (input == "summary"){
+    } else if (input == "summary"){
         std::map<Snack, int> existing = inventory.summarize_inventory();
         std::stringstream inv_ss;
 
@@ -76,13 +76,13 @@ std::string BaseManager::handle_command ( std::string input ){
                    << it->first.get_name();
             if(it != --existing.end()) inv_ss << "\n";
         }
-
         return inv_ss.str();
     }
 
     return "Command not recognized";
 }
-bool BaseManager::handle_order(std::string input){
+
+bool BaseManager::handle_order ( std::string input ){
     std::cout << "Processing order..." << std::endl;
 
     // Read in new order
@@ -166,6 +166,7 @@ bool BaseManager::handle_order(std::string input){
 
     return valid_order;
 }
+
 std::string BaseManager::handle_update(std::string input){
     // Read in new order
     std::stringstream ss(input);
@@ -184,19 +185,17 @@ std::string BaseManager::handle_update(std::string input){
 
     return "Inventory updated";
 }
-StatusCode BaseManager::get_status(){
-    return status;
-}
+
 void BaseManager::process_queue(){
     // First, check current status
     // If robot is occupied, do nothing
     // If robot is ready to go and queue has orders, start processing them
-    if (status == StatusCode::READY && queue.size() > 0){
+    if (state == State::IDLE && queue.size() > 0){
 
         std::cout << "Processing queue with size " << queue.size() << "..." << std::endl;
 
-        status = StatusCode::DISPENSING;
-        bl_link.send("order");
+        state = State::DISPENSE;
+        bl_link.send ( "order" );
 
         // Pop first order off queue
         Order curr_order = queue.front();
@@ -247,43 +246,32 @@ void BaseManager::process_queue(){
         }
     }
 }
+
 void BaseManager::run(){
 
     // Create callback function that can be passed as argument
-    std::function<int ( std::string, std::string& )> callback_func (
-            bind ( &BaseManager::handle_input, this,
-                   std::placeholders::_1, std::placeholders::_2 ) );
+    std::function<std::string ( std::string )> callback_func (
+            bind ( &BaseManager::handle_input, this, std::placeholders::_1 ) );
 
     // Run server and process callbacks
-    server.serve(callback_func);
+    server.serve ( callback_func );
 }
+
 void BaseManager::shutdown(){
     bl_link.disconnect();
     server.shutdown();
 }
+
 void BaseManager::listen_heartbeat(){
-    bool temp = true;
-
-    // Check in with robie at 1 Hz
-    while(true){
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-
-        //bl_link.receive();
+    // Listen for updates from the mobile robot
+    while ( true ) {
+        std::string msg = bl_link.receive();
 
         // If status changed, process queue
-        /*
-        if (temp){
-        */
-            status = StatusCode::READY;
-        /*
+        if ( msg == "HOME" ) {
+            std::lock_guard<std::mutex> lock ( access_mutex );
+            state = State::IDLE;
+            process_queue();
         }
-        else{
-            status = StatusCode::unavailable;
-        }
-        temp = !temp;
-
-        cout << "Status changed to " << status_to_string(status) << endl;
-        */
-        process_queue();
     }
 }

@@ -10,7 +10,7 @@ class BluetoothLink{
         void connect();
         void disconnect();
         int send ( std::string message );
-        int receive();
+        std::string receive();
 };
 
 #endif

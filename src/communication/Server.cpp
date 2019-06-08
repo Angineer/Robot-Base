@@ -15,7 +15,8 @@ Server::Server(std::string host, int portno) : Socket(host, portno)
         exit(1);
     }
 }
-void Server::child_serve(int sockfd, std::function<int(std::string, std::string&)> callback_func){
+
+void Server::child_serve(int sockfd, std::function<std::string ( std::string )> callback_func){
     int len;
 
     std::cout << "Child thread started!" << std::endl;
@@ -50,9 +51,8 @@ void Server::child_serve(int sockfd, std::function<int(std::string, std::string&
             }
             else{
                 // Call callback using input
-                std::string message(buffer, len);
-                std::string response;
-                callback_func(message, response);
+                std::string message ( buffer, len );
+                std::string response = callback_func ( message );
 
                 // Send response length
                 len = response.length();
@@ -71,7 +71,7 @@ void Server::child_serve(int sockfd, std::function<int(std::string, std::string&
         }
     }
 }
-void Server::serve(std::function<int(std::string, std::string&)> callback_func){
+void Server::serve(std::function<std::string ( std::string )> callback_func){
     std::cout << "Listening for connections" << std::endl;
     
     // Server runs forever

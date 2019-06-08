@@ -12,7 +12,7 @@ class Server: public Socket
 {
     public:
         Server(std::string host, int portno);
-        void serve(std::function<int(std::string, std::string&)> callback_func);
+        void serve(std::function<std::string ( std::string )> callback_func);
         void shutdown();
 
     private:
@@ -21,7 +21,7 @@ class Server: public Socket
         pid_t pID;
 
         void child_serve ( int sockfd,
-                           std::function<int(std::string, std::string&)>
+                           std::function<std::string ( std::string )>
                                callback_func );
 };
 

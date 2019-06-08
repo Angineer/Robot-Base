@@ -14,11 +14,11 @@ add_library ( robie SHARED ./src/BaseManager.cpp
                            ./src/communication/BluetoothLink.cpp
                            ./src/communication/Client.cpp
                            ./src/communication/Command.cpp
+                           ./src/communication/Error.cpp
                            ./src/communication/Message.cpp
                            ./src/communication/Order.cpp
                            ./src/communication/Server.cpp
                            ./src/communication/Socket.cpp
-                           ./src/communication/Status.cpp
                            ./src/communication/Update.cpp
                            ./src/inventory/Inventory.cpp
                            ./src/inventory/Slot.cpp

@@ -1,8 +1,11 @@
 #include "communication/BluetoothLink.h"
 
+#include <bluetooth/bluetooth.h>
+#include <chrono>
 #include <iostream>
+#include <thread>
 
-BluetoothLink::BluetoothLink(){
+BluetoothLink::BluetoothLink() {
     //foo
 }
 void BluetoothLink::connect(){
@@ -15,7 +18,8 @@ int BluetoothLink::send(std::string message){
     std::cout << "Sending message over bluetooth..." << std::endl;
     return 0;
 }
-int BluetoothLink::receive(){
+std::string BluetoothLink::receive(){
     std::cout << "Receiving message over bluetooth..." << std::endl;
-    return 0;
+    std::this_thread::sleep_for ( std::chrono::seconds ( 2 ) );
+    return "DELIVERING";
 }
