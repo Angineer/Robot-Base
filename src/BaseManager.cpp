@@ -14,11 +14,9 @@
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( "localhost", 5000),
+    bl_link(),
     state ( State::IDLE )
 {
-    // Establish bluetooth link
-    bl_link.connect();
-
     // Start heartbeat monitor thread
     std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
     t.detach();
@@ -258,7 +256,6 @@ void BaseManager::run(){
 }
 
 void BaseManager::shutdown(){
-    bl_link.disconnect();
     server.shutdown();
 }
 

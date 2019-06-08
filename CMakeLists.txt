@@ -28,7 +28,7 @@ install ( TARGETS robie LIBRARY DESTINATION /usr/lib )
 target_include_directories ( robie PUBLIC ./include
                                    PUBLIC ./include/communication
                                    PUBLIC ./include/inventory )
-target_link_libraries ( robie ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries ( robie ${CMAKE_THREAD_LIBS_INIT} bluetooth )
 
 # Inventory server
 add_executable ( inventory_server ./src/inventory_server.cpp )

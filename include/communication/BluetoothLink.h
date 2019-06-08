@@ -4,13 +4,19 @@
 #include <string>
 
 class BluetoothLink{
-    public:
-        BluetoothLink();
-        
-        void connect();
-        void disconnect();
-        int send ( std::string message );
-        std::string receive();
+public:
+    BluetoothLink();
+    ~BluetoothLink();
+    
+    int send ( std::string message );
+    std::string receive();
+
+private:
+    // BT device id
+    int device;
+
+    // BT socket
+    int sock;
 };
 
 #endif
