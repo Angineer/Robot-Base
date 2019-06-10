@@ -4,13 +4,28 @@
 #include <thread>
 #include <unistd.h>
 
-Server::Server(std::string host, int portno) : Socket(host, portno)
+#include "communication/BluetoothSocket.h"
+#include "communication/IpSocket.h"
+
+Server::Server ( SocketType type, std::string connection_string )
 {
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    //serv_addr.sin_addr.s_addr = INADDR_ANY;
+    if ( type == SocketType::IP ) {
+        // Parse connection string
+        size_t delim = connection_string.find ( ":" );
+        std::string host = connection_string.substr ( 0, delim );
+        std::string port = connection_string.substr ( delim + 1 );
 
-    int bind_success = bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
+        socket.reset ( new IpSocket ( host, port ) );
+    } else if ( type == SocketType::BLUETOOTH ) {
+        // TODO
+    }
 
-    if (bind_success < 0){
+    int bind_success = bind ( socket->socket_fd, 
+                              socket->address->ai_addr,
+                              sizeof ( struct addrinfo ) );
+
+    if ( bind_success < 0 ) {
         std::cout << "ERROR binding to socket!" << std::endl;
         exit(1);
     }
@@ -25,7 +40,7 @@ void Server::child_serve(int sockfd, std::function<std::string ( std::string )> 
     bool connect = true;
     while(connect){
         // Read length of message from socket
-        n = read(sockfd, &len, sizeof(len));
+        int n = read(sockfd, &len, sizeof(len));
         if (n < 0){
             std::cout << "ERROR reading from socket!" << std::endl;
         }
@@ -71,24 +86,32 @@ void Server::child_serve(int sockfd, std::function<std::string ( std::string )> 
         }
     }
 }
-void Server::serve(std::function<std::string ( std::string )> callback_func){
+
+void Server::serve ( std::function<std::string ( std::string )> callback_func ) {
     std::cout << "Listening for connections" << std::endl;
     
     // Server runs forever
-    while (true){
-        listen(sockfd, 5);
-        clilen = sizeof(cli_addr);
-        int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    while ( true ) {
+        listen ( socket->socket_fd, 5 );
+        sockaddr client;
+        socklen_t client_len = sizeof ( struct addrinfo );
+        int newsockfd = accept ( socket->socket_fd,
+                                 &client,
+                                 &client_len );
 
-        if (newsockfd > 0){
-            std::cout << "Connection " << newsockfd << " established!" << std::endl;
+        if ( newsockfd > 0 ) {
+            std::cout << "Connection " << newsockfd
+                      << " established!" << std::endl;
 
-            std::thread t(&Server::child_serve, this, newsockfd, callback_func); // Create child thread
+            // Create child thread
+            std::thread t ( &Server::child_serve,
+                            this, newsockfd, callback_func );
             t.detach();
         }
     }
 }
-void Server::shutdown(){
-    close(sockfd);
+
+void Server::shutdown() {
+    close ( socket->socket_fd );
 }
 

@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <functional>
+#include <memory>
 #include <netinet/in.h>
 #include <string>
 #include <string.h>
@@ -10,19 +11,18 @@
 
 class Server: public Socket
 {
-    public:
-        Server(std::string host, int portno);
-        void serve(std::function<std::string ( std::string )> callback_func);
-        void shutdown();
+public:
+    Server ( SocketType type, std::string connection_string );
+    void serve ( std::function<std::string ( std::string )> callback_func );
+    void shutdown();
 
-    private:
-        struct sockaddr_in cli_addr;
-        socklen_t clilen;
-        pid_t pID;
+private:
+    std::unique_ptr<Socket> socket;
+    pid_t pID;
 
-        void child_serve ( int sockfd,
-                           std::function<std::string ( std::string )>
-                               callback_func );
+    void child_serve ( int sockfd,
+                       std::function<std::string ( std::string )>
+                           callback_func );
 };
 
 #endif

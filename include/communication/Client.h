@@ -1,19 +1,21 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <memory>
 #include <string>
 
 #include "communication/Message.h"
 #include "communication/Socket.h"
 
-class Client: public Socket{
-    private:
-        struct hostent *server;
-    public:
-        Client(std::string host, int portno);
-        int connect();
-        void disconnect();
-        std::string send(Message& message);
+class Client
+{
+public:
+    Client ( SocketType type, std::string connection_string );
+    ~Client ();
+    std::string send ( Message& message );
+
+private:
+    std::unique_ptr<Socket> socket;
 };
 
 #endif

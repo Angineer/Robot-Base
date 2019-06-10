@@ -11,10 +11,12 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
+#include "communication/Command.h"
+
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
-    server ( "localhost", 5000),
-    bl_link(),
+    server ( SocketType::IP, "localhost:5000" ),
+    mobile_client ( SocketType::BLUETOOTH, "" ),
     state ( State::IDLE )
 {
     // Start heartbeat monitor thread
@@ -192,9 +194,6 @@ void BaseManager::process_queue(){
 
         std::cout << "Processing queue with size " << queue.size() << "..." << std::endl;
 
-        state = State::DISPENSE;
-        bl_link.send ( "order" );
-
         // Pop first order off queue
         Order curr_order = queue.front();
         queue.pop_front();
@@ -236,6 +235,11 @@ void BaseManager::process_queue(){
                 }
             }
         }
+
+        state = State::DISPENSE;
+        Order order_msg ( order );
+        mobile_client.send ( order_msg );
+
         std::map<Snack, int> curr_inv = inventory.summarize_inventory();
 
         std::cout << "After processing queue, the inventory status is:" << std::endl;
@@ -262,7 +266,8 @@ void BaseManager::shutdown(){
 void BaseManager::listen_heartbeat(){
     // Listen for updates from the mobile robot
     while ( true ) {
-        std::string msg = bl_link.receive();
+        Command status_inquiry ( "status" );
+        std::string msg = mobile_client.send ( status_inquiry );
 
         // If status changed, process queue
         if ( msg == "HOME" ) {

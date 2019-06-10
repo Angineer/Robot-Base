@@ -9,21 +9,19 @@
 #include <iostream>
 #include <map>
 
-Client client("localhost", 5000);
 
 void shutdown(int signum){
-    client.disconnect();
     std::cout << "Stopping Admin Client" << std::endl;
     exit(0);
 }
 
-void send_command(std::string command_str){
+void send_command( Client& client, std::string command_str){
     Command command(command_str);
 
     std::cout << client.send(command) << std::endl;
 }
 
-void send_order(){
+void send_order( Client& client ){
     std::string user_input; // Reading directly from cin was giving me issues
     int count_items;
     std::string name;
@@ -53,7 +51,7 @@ void send_order(){
     std::cout << client.send(order) << std::endl;
 }
 
-void send_update(){
+void send_update( Client& client ){
     std::string user_input; // Reading directly from cin was giving me issues
     int slot_id;
     std::string new_type;
@@ -82,9 +80,9 @@ int main(int argc, char *argv[])
     std::string last_input;
 
     std::cout << "Connecting to inventory server..." << std::endl;
-    int success = client.connect();
+    Client client ( SocketType::IP, "localhost:5000" );
 
-    if(success == 0){
+    if( true ){
         std::cout << "===================\n";
         std::cout << "Robie Admin Console\n";
         std::cout << "===================\n";
@@ -97,10 +95,10 @@ int main(int argc, char *argv[])
             last_input = user_input;
 
             if (user_input == "status" || user_input == "inv"){
-                send_command(user_input);
+                send_command(client, user_input);
             }
-            else if (user_input == "order") send_order();
-            else if (user_input == "update") send_update();
+            else if (user_input == "order") send_order( client );
+            else if (user_input == "update") send_update( client );
             else if (user_input == "help"){
                 std::cout << "Available commands (enter key will repeat last command):" << std::endl;
                 std::cout << "status    Get robot status" << std::endl;

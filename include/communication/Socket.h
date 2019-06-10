@@ -4,14 +4,23 @@
 #include <netinet/in.h>
 #include <string>
 
-class Socket{
-    protected:
-        int sockfd, portno, n;
-        struct sockaddr_in serv_addr;
-        struct hostent *server;
-        char* buffer; // Message buffer
-    public:
-        Socket(std::string host, int portno);
+// Different types of sockets. Each is represented by its own child class.
+enum class SocketType
+{
+    IP,
+    BLUETOOTH
+};
+
+// A unix socket
+class Socket
+{
+public:
+    // Constructor
+    Socket() = default;
+
+    int socket_fd;
+    struct addrinfo* address;
+    char* buffer; // Message buffer
 };
 
 #endif

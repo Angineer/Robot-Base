@@ -5,7 +5,7 @@
 #include <mutex>
 #include <string>
 
-#include "communication/BluetoothLink.h"
+#include "communication/Client.h"
 #include "communication/Order.h"
 #include "communication/Server.h"
 #include "inventory/Inventory.h"
@@ -58,7 +58,7 @@ private:
     Server server;
 
     // The bluetooth connection to the mobile base
-    BluetoothLink bl_link;
+    Client mobile_client;
 
     // The queue of current orders. Should not be accessed unless holding
     // mutex_queue.
