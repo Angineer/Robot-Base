@@ -21,12 +21,18 @@ Server::Server ( SocketType type, std::string connection_string )
         // TODO
     }
 
+    // If socket not configured, exit
+    if ( !socket ) {
+        std::cout << "Server socket not configured!" << std::endl;
+        return;
+    }
+
     int bind_success = bind ( socket->socket_fd, 
                               socket->address->ai_addr,
-                              sizeof ( struct addrinfo ) );
+                              socket->address->ai_addrlen );
 
     if ( bind_success < 0 ) {
-        std::cout << "ERROR binding to socket!" << std::endl;
+        std::cout << "ERROR binding to socket! " << errno << std::endl;
         exit(1);
     }
 }
@@ -94,7 +100,7 @@ void Server::serve ( std::function<std::string ( std::string )> callback_func ) 
     while ( true ) {
         listen ( socket->socket_fd, 5 );
         sockaddr client;
-        socklen_t client_len = sizeof ( struct addrinfo );
+        socklen_t client_len;
         int newsockfd = accept ( socket->socket_fd,
                                  &client,
                                  &client_len );

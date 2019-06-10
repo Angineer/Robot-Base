@@ -5,7 +5,8 @@
 Inventory::Inventory ( std::string inventory_file )
 {
     // Try to load inventory file
-    std::cout << "Loading inventory from config file..." << std::endl;
+    std::cout << "Loading inventory from config file "
+              << inventory_file << "..." << std::endl;
 
     std::ifstream in_file;
     in_file.open ( inventory_file );
@@ -14,7 +15,7 @@ Inventory::Inventory ( std::string inventory_file )
         std::string snack_type;
         int quant;
         while ( in_file >> snack_type >> quant ) {
-            //Snack snack ( snack_type );
+            std::cout << "Adding slot: " << snack_type << ", " << quant << std::endl;
             slots.emplace_back ( snack_type );
             slots.back().add ( quant );
         }

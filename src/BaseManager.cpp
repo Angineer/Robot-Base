@@ -264,8 +264,9 @@ void BaseManager::shutdown(){
 }
 
 void BaseManager::listen_heartbeat(){
-    // Listen for updates from the mobile robot
+    // Query for updates from the mobile robot every 2 seconds
     while ( true ) {
+        std::this_thread::sleep_for ( std::chrono::seconds ( 2 ) );
         Command status_inquiry ( "status" );
         std::string msg = mobile_client.send ( status_inquiry );
 

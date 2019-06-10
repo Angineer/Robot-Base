@@ -19,9 +19,15 @@ Client::Client ( SocketType type, std::string connection_string ) {
         // TODO
     }
 
+    // If socket not configured, exit
+    if ( !socket ) {
+        std::cout << "Client socket not configured!" << std::endl;
+        return;
+    }
+
     int connect_success = connect ( socket->socket_fd,
                                     socket->address->ai_addr,
-                                    sizeof ( struct addrinfo ) );
+                                    socket->address->ai_addrlen );
 
     if (connect_success < 0){
         std::cout << "ERROR connecting to server!" << std::endl;
@@ -33,6 +39,11 @@ Client::~Client() {
 }
 
 std::string Client::send(Message& message){
+    if ( !socket ) {
+        std::cout << "Client socket not configured!" << std::endl;
+        return "ERROR";
+    }
+
     message.write_serial();
     std::string content = message.get_serial();
 

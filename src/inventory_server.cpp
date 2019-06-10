@@ -12,8 +12,10 @@ int main ( int argc, char *argv[] )
         inv_file = argv[1];
     }
     else{
-        inv_file = "/home/andy/robie.inv";
+        inv_file = "/home/pi/robie.inv";
     } 
+
+    std::cout << "Starting Base Manager" << std::endl;
 
     // Create the manager
     BaseManager manager ( inv_file );

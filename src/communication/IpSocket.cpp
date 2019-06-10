@@ -12,6 +12,7 @@ IpSocket::IpSocket ( std::string host, std::string port )
     memset ( &hints, 0, sizeof ( struct addrinfo ) );
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP
+    hints.ai_flags = AI_PASSIVE;
 
     int address_success = getaddrinfo ( host.c_str(), 
                                         port.c_str(),
