@@ -275,6 +275,8 @@ void BaseManager::listen_heartbeat(){
             std::lock_guard<std::mutex> lock ( access_mutex );
             state = State::IDLE;
             process_queue();
+        } else if ( msg == "OK" ) {
+            std::cout << "Robie is OK" << std::endl;
         }
     }
 }

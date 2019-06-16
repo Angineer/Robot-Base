@@ -4,7 +4,7 @@
 
 std::string handle_input ( std::string input ){
     std::cout << "Received message: " << input << std::endl;;
-    return "Test";
+    return "OK";
 }
 
 int main(int argc, char *argv[])

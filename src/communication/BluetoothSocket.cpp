@@ -13,8 +13,8 @@ BluetoothSocket::BluetoothSocket ( std::string device )
     // Address to which we will connect via this socket
     sockaddr_rc* local_address = new sockaddr_rc;
     local_address->rc_family = AF_BLUETOOTH;
-    str2ba ( device.c_str(), & ( local_address->rc_bdaddr ) );
-    local_address->rc_channel = (uint8_t) 1;
+    str2ba ( device.c_str(), &( local_address->rc_bdaddr ) );
+    local_address->rc_channel = static_cast<uint8_t> ( 1 );
 
     address = static_cast<void*> ( local_address );
 
