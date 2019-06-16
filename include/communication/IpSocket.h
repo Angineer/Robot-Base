@@ -11,8 +11,8 @@ class IpSocket : public Socket
 {
 public:
     // Constructor
-    IpSocket ( std::string host, std::string port );
-    ~IpSocket ();
+    IpSocket ( std::string host, int port );
+    ~IpSocket();
 };
 
 #endif

@@ -12,6 +12,7 @@ class BluetoothSocket : public Socket
 public:
     // Constructor
     BluetoothSocket ( std::string device );
+    ~BluetoothSocket();
 
 private:
     // BT device id

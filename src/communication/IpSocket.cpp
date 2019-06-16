@@ -1,31 +1,24 @@
 #include "communication/IpSocket.h"
 
+#include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
-#include <netdb.h>
 #include <strings.h>
 
-IpSocket::IpSocket ( std::string host, std::string port )
+IpSocket::IpSocket ( std::string host, int port )
 {
-    // Set up the address info
-    struct addrinfo hints;
-    memset ( &hints, 0, sizeof ( struct addrinfo ) );
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP
-    hints.ai_flags = AI_PASSIVE;
+    // Address to which we will connect via this socket
+    sockaddr_in* local_address = new sockaddr_in;
+    local_address->sin_family = AF_INET;
+    local_address->sin_port = htons ( port );
+    inet_aton ( host.c_str(), &( local_address->sin_addr ) );
 
-    int address_success = getaddrinfo ( host.c_str(), 
-                                        port.c_str(),
-                                        &hints,
-                                        &address );
-    if ( address_success < 0 ) {
-        std::cout << "ERROR finding address info!" << std::endl;
-    }
+    address = static_cast<void*> ( local_address );
+
+    address_len = sizeof ( sockaddr_in );
 
     // Create the socket
-    socket_fd = socket ( address->ai_family,
-                         address->ai_socktype,
-                         address->ai_protocol );
+    socket_fd = socket ( AF_INET, SOCK_STREAM, 0 );
 
     if ( socket_fd < 0 ){
         std::cout << "ERROR opening socket" << std::endl;
@@ -34,6 +27,6 @@ IpSocket::IpSocket ( std::string host, std::string port )
 
 IpSocket::~IpSocket ()
 {
-    freeaddrinfo ( address );
+    delete static_cast<sockaddr_in*> ( address );
 }
 

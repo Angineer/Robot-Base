@@ -16,7 +16,7 @@ Server::Server ( SocketType type, std::string connection_string )
         std::string host = connection_string.substr ( 0, delim );
         std::string port = connection_string.substr ( delim + 1 );
 
-        socket.reset ( new IpSocket ( host, port ) );
+        socket.reset ( new IpSocket ( host, atoi ( port.c_str() ) ) );
     } else if ( type == SocketType::BLUETOOTH ) {
         // TODO
     }
@@ -28,8 +28,8 @@ Server::Server ( SocketType type, std::string connection_string )
     }
 
     int bind_success = bind ( socket->socket_fd, 
-                              socket->address->ai_addr,
-                              socket->address->ai_addrlen );
+                              static_cast<sockaddr*> ( socket->address ),
+                              socket->address_len );
 
     if ( bind_success < 0 ) {
         std::cout << "ERROR binding to socket! " << errno << std::endl;

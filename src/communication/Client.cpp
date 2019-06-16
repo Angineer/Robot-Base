@@ -14,7 +14,7 @@ Client::Client ( SocketType type, std::string connection_string ) {
         std::string host = connection_string.substr ( 0, delim );
         std::string port = connection_string.substr ( delim + 1 );
 
-        socket.reset ( new IpSocket ( host, port ) );
+        socket.reset ( new IpSocket ( host, std::stoi ( port ) ) );
     } else if ( type == SocketType::BLUETOOTH ) {
         // TODO
     }
@@ -26,8 +26,8 @@ Client::Client ( SocketType type, std::string connection_string ) {
     }
 
     int connect_success = connect ( socket->socket_fd,
-                                    socket->address->ai_addr,
-                                    socket->address->ai_addrlen );
+                                    static_cast<sockaddr*> ( socket->address ),
+                                    socket->address_len );
 
     if (connect_success < 0){
         std::cout << "ERROR connecting to server!" << std::endl;

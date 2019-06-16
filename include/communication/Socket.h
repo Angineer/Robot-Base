@@ -19,7 +19,8 @@ public:
     Socket() = default;
 
     int socket_fd;
-    struct addrinfo* address;
+    void* address;
+    size_t address_len;
     char* buffer; // Message buffer
 };
 
