@@ -15,7 +15,7 @@
 
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
-    server ( SocketType::IP, "127.0.0.1:5000" ),
+    server ( SocketType::IP ),
     mobile_client ( SocketType::BLUETOOTH, "B8:27:EB:E4:1C:3C" ),
     state ( State::IDLE )
 {

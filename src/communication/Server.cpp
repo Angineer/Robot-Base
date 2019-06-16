@@ -7,18 +7,13 @@
 #include "communication/BluetoothSocket.h"
 #include "communication/IpSocket.h"
 
-Server::Server ( SocketType type, std::string connection_string )
+Server::Server ( SocketType type )
 {
     //serv_addr.sin_addr.s_addr = INADDR_ANY;
     if ( type == SocketType::IP ) {
-        // Parse connection string
-        size_t delim = connection_string.find ( ":" );
-        std::string host = connection_string.substr ( 0, delim );
-        std::string port = connection_string.substr ( delim + 1 );
-
-        socket.reset ( new IpSocket ( host, atoi ( port.c_str() ) ) );
+        socket.reset ( new IpSocket() );
     } else if ( type == SocketType::BLUETOOTH ) {
-        socket.reset ( new BluetoothSocket ( connection_string ) );
+        socket.reset ( new BluetoothSocket() );
     }
 
     // If socket not configured, exit

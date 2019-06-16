@@ -12,6 +12,10 @@ class BluetoothSocket : public Socket
 public:
     // Constructor
     BluetoothSocket ( std::string device );
+
+    // Default constructor will use "00:00:00:00:00:00"
+    BluetoothSocket();
+
     ~BluetoothSocket();
 
 private:

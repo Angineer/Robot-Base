@@ -41,3 +41,9 @@ add_executable ( admin_client ./src/admin_client.cpp )
 
 set_property ( TARGET admin_client PROPERTY CXX_STANDARD 11 )
 target_link_libraries ( admin_client robie )
+
+# Bluetooth Server
+add_executable ( bluetooth_server ./src/bluetooth_server.cpp )
+
+set_property ( TARGET bluetooth_server PROPERTY CXX_STANDARD 11 )
+target_link_libraries ( bluetooth_server robie )

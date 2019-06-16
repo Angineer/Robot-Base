@@ -25,6 +25,8 @@ IpSocket::IpSocket ( std::string host, int port )
     }
 }
 
+IpSocket::IpSocket() : IpSocket::IpSocket ( "127.0.0.1", 5000 ) {}
+
 IpSocket::~IpSocket ()
 {
     delete static_cast<sockaddr_in*> ( address );

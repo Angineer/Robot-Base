@@ -8,9 +8,8 @@
 #include <unistd.h>
 #include <strings.h>
 
-BluetoothSocket::BluetoothSocket ( std::string device ) {
-    std::cout << "Establishing bluetooth connection..." << std::endl;
-
+BluetoothSocket::BluetoothSocket ( std::string device )
+{
     // Address to which we will connect via this socket
     sockaddr_rc* local_address = new sockaddr_rc;
     local_address->rc_family = AF_BLUETOOTH;
@@ -29,6 +28,8 @@ BluetoothSocket::BluetoothSocket ( std::string device ) {
     }
 }
 
+BluetoothSocket::BluetoothSocket() :
+    BluetoothSocket::BluetoothSocket ( "00:00:00:00:00:00" ) {};
 BluetoothSocket::~BluetoothSocket () {
     delete static_cast <sockaddr_rc*> ( address );
 }
