@@ -18,7 +18,7 @@ Server::Server ( SocketType type, std::string connection_string )
 
         socket.reset ( new IpSocket ( host, atoi ( port.c_str() ) ) );
     } else if ( type == SocketType::BLUETOOTH ) {
-        // TODO
+        socket.reset ( new BluetoothSocket ( connection_string ) );
     }
 
     // If socket not configured, exit

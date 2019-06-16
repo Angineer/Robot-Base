@@ -16,7 +16,7 @@
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( SocketType::IP, "127.0.0.1:5000" ),
-    mobile_client ( SocketType::BLUETOOTH, "" ),
+    mobile_client ( SocketType::BLUETOOTH, "B8:27:EB:E4:1C:3C" ),
     state ( State::IDLE )
 {
     // Start heartbeat monitor thread
@@ -266,7 +266,7 @@ void BaseManager::shutdown(){
 void BaseManager::listen_heartbeat(){
     // Query for updates from the mobile robot every 2 seconds
     while ( true ) {
-        std::this_thread::sleep_for ( std::chrono::seconds ( 200 ) );
+        std::this_thread::sleep_for ( std::chrono::seconds ( 2 ) );
         Command status_inquiry ( "status" );
         std::string msg = mobile_client.send ( status_inquiry );
 

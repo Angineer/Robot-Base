@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "communication/BluetoothSocket.h"
 #include "communication/IpSocket.h"
 
 Client::Client ( SocketType type, std::string connection_string ) {
@@ -16,7 +17,7 @@ Client::Client ( SocketType type, std::string connection_string ) {
 
         socket.reset ( new IpSocket ( host, std::stoi ( port ) ) );
     } else if ( type == SocketType::BLUETOOTH ) {
-        // TODO
+        socket.reset ( new BluetoothSocket ( connection_string ) );
     }
 
     // If socket not configured, exit
