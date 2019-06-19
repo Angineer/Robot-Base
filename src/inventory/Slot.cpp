@@ -1,18 +1,16 @@
 #include "inventory/Slot.h"
 
-#include "inventory/Snack.h"
-
-Slot::Slot ( Snack type ){
+Slot::Slot ( std::string type ){
     this->type = type;
     count = 0;
     reserved_count = 0;
 }
 
-Snack Slot::get_type() const {
+std::string Slot::get_type() const {
     return type;
 }
 
-void Slot::set_type ( const Snack& new_type ) {
+void Slot::set_type ( const std::string& new_type ) {
     type = new_type;
 }
 

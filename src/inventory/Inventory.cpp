@@ -1,6 +1,7 @@
 #include "inventory/Inventory.h"
 
 #include <fstream>
+#include <iostream>
 
 Inventory::Inventory ( std::string inventory_file )
 {
@@ -31,7 +32,7 @@ std::vector<Slot> Inventory::get_slots() const{
     return slots;
 }
 
-void Inventory::set_type ( int slot, Snack type ){
+void Inventory::set_type ( int slot, std::string type ){
     slots[slot].set_type ( type );
 }
 
@@ -48,8 +49,8 @@ void Inventory::reserve ( int slot, int count ){
     slots[slot].reserve ( count );
 }
 
-std::map<Snack, int> Inventory::summarize_inventory() const{
-    std::map<Snack, int> curr_inventory;
+std::map<std::string, int> Inventory::summarize_inventory() const{
+    std::map<std::string, int> curr_inventory;
 
     for ( auto it = slots.begin(); it != slots.end(); ++it ){
         // If slot type already in map, combine them
@@ -60,7 +61,7 @@ std::map<Snack, int> Inventory::summarize_inventory() const{
         // Else, add a new entry for the type
         else{
             curr_inventory.insert (
-                    std::pair<Snack, int> ( it->get_type(), it->get_count_available() ) );
+                    std::pair<std::string, int> ( it->get_type(), it->get_count_available() ) );
         }
     }
     return curr_inventory;

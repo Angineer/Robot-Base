@@ -1,6 +1,8 @@
 #include "BaseManager.h"
-#include "communication/Server.h"
+#include "Server.h"
 #include "inventory/Inventory.h"
+
+#include <iostream>
 
 using namespace std;
 

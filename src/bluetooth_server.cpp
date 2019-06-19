@@ -1,4 +1,4 @@
-#include "communication/Server.h"
+#include "Server.h"
 
 #include <iostream>
 

@@ -5,9 +5,9 @@
 #include <mutex>
 #include <string>
 
-#include "communication/Client.h"
-#include "communication/Order.h"
-#include "communication/Server.h"
+#include "Client.h"
+#include "Order.h"
+#include "Server.h"
 #include "inventory/Inventory.h"
 #include "State.h"
 

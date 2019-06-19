@@ -1,8 +1,7 @@
-#include "communication/Client.h"
-#include "communication/Command.h"
-#include "communication/Order.h"
-#include "communication/Update.h"
-#include "inventory/Snack.h"
+#include "Client.h"
+#include "Command.h"
+#include "Order.h"
+#include "Update.h"
 
 #include <algorithm>
 #include <csignal>
@@ -26,7 +25,7 @@ void send_order( Client& client ){
     int count_items;
     std::string name;
     int quant;
-    std::map<Snack, int> items;
+    std::map<std::string, int> items;
 
     std::cout << "-----New order-----\n";
     std::cout << "How many components? ";
@@ -41,9 +40,7 @@ void send_order( Client& client ){
         getline(std::cin, user_input);
         quant = stoi(user_input);
 
-        Snack type(name);
-
-        items.insert(std::pair<Snack, int>(type, quant));
+        items.insert(std::pair<std::string, int>(name, quant));
     }
 
     Order order(items);
@@ -66,7 +63,7 @@ void send_update( Client& client ){
     getline(std::cin, user_input);
     new_quant = stoi(user_input);
 
-    Update update(slot_id, Snack(new_type), new_quant);
+    Update update(slot_id, new_type, new_quant);
 
     std::cout << client.send(update) << std::endl;
 }

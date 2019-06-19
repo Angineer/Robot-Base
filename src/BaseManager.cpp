@@ -11,7 +11,7 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
-#include "communication/Command.h"
+#include "Command.h"
 
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
@@ -61,19 +61,19 @@ std::string BaseManager::handle_command ( std::string input ) {
 
         for ( auto it = existing.begin(); it != existing.end(); ++it ){
             inv_ss << it - existing.begin()
-                   << ": " << it->get_type().get_name()
+                   << ": " << it->get_type()
                    << ", " << it->get_count()
                    << ", " << it->get_count_available();
             if ( it != --existing.end() ) inv_ss << "\n";
         }
         return inv_ss.str();
     } else if (input == "summary"){
-        std::map<Snack, int> existing = inventory.summarize_inventory();
+        std::map<std::string, int> existing = inventory.summarize_inventory();
         std::stringstream inv_ss;
 
         for ( auto it = existing.begin(); it != existing.end(); ++it ){
             inv_ss << it->second << " "
-                   << it->first.get_name();
+                   << it->first;
             if(it != --existing.end()) inv_ss << "\n";
         }
         return inv_ss.str();
@@ -87,7 +87,7 @@ bool BaseManager::handle_order ( std::string input ){
 
     // Read in new order
     std::stringstream ss(input);
-    std::map<Snack, int> items;
+    std::map<std::string, int> items;
 
     {
         cereal::BinaryInputArchive iarchive(ss); // Create an input archive
@@ -97,7 +97,7 @@ bool BaseManager::handle_order ( std::string input ){
 
     // Double check order validity
     bool valid_order = true;
-    std::map<Snack, int> existing = inventory.summarize_inventory();
+    std::map<std::string, int> existing = inventory.summarize_inventory();
 
     // Make sure items match inventory
     for ( auto it = items.begin(); it != items.end(); ++it ){
@@ -106,13 +106,13 @@ bool BaseManager::handle_order ( std::string input ){
 
         if ( item_in_inv == existing.end() ){
             std::cout << "Order contains item not in inventory: "
-                      << it->first.get_name() << "!" << std::endl;
+                      << it->first << "!" << std::endl;
             valid_order = false;
             break;
         }
         if(item_in_inv->second < it->second){
             std::cout << "Insufficient quantity available: "
-                      << it->first.get_name()
+                      << it->first
                       << "!" << std::endl;
             std::cout << "Asked for " << it->second
                       << ", but inventory has " << item_in_inv->second
@@ -138,7 +138,7 @@ bool BaseManager::handle_order ( std::string input ){
                 for(int i = start; i < slots.size(); ++i){
 
                     // If we find a slot that matches, try to reserve there
-                    if ( slots[i].get_type().get_name() == it->first.get_name() ){
+                    if ( slots[i].get_type() == it->first ){
                         start = i + 1;
                         available = slots[i].get_count_available();
 
@@ -171,7 +171,7 @@ std::string BaseManager::handle_update(std::string input){
     // Read in new order
     std::stringstream ss(input);
     int slot_id;
-    Snack new_type;
+    std::string new_type;
     int new_quant;
 
     {
@@ -198,7 +198,7 @@ void BaseManager::process_queue(){
         Order curr_order = queue.front();
         queue.pop_front();
 
-        std::map<Snack, int> order = curr_order.get_order();
+        std::map<std::string, int> order = curr_order.get_order();
 
         std::vector<Slot> slots = inventory.get_slots();
 
@@ -214,7 +214,7 @@ void BaseManager::process_queue(){
                 for(int i = start; i < slots.size(); ++i){
 
                     // If we find a slot that matches, try to dispense from there
-                    if ( slots[i].get_type().get_name() == it->first.get_name() ){
+                    if ( slots[i].get_type() == it->first ){
                         start = i + 1;
                         available = slots[i].get_count_available();
 
@@ -240,11 +240,11 @@ void BaseManager::process_queue(){
         Order order_msg ( order );
         mobile_client.send ( order_msg );
 
-        std::map<Snack, int> curr_inv = inventory.summarize_inventory();
+        std::map<std::string, int> curr_inv = inventory.summarize_inventory();
 
         std::cout << "After processing queue, the inventory status is:" << std::endl;
         for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            std::cout << it->second << " x " << it->first.get_name() << std::endl;
+            std::cout << it->second << " x " << it->first << std::endl;
         }
     }
 }

@@ -1,21 +1,21 @@
 #ifndef SLOT_H
 #define SLOT_H
 
-#include "inventory/Snack.h"
+#include <string>
 
 class Slot
 {
 public:
-    Slot ( Snack type );
+    Slot ( std::string type );
     int get_count_available() const;
-    Snack get_type() const;
-    void set_type ( const Snack& new_type );
+    std::string get_type() const;
+    void set_type ( const std::string& new_type );
     int get_count() const;
     void add ( int quantity );
     bool reserve ( int quantity );
 
 private:
-    Snack type;
+    std::string type;
     int count;
     int reserved_count;
 };
