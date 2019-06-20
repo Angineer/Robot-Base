@@ -4,16 +4,16 @@
 #include <string>
 
 class MotorController{
+public:
+    MotorController ( std::string device );
+    ~MotorController();
+
+    void dispense ( int slot, int count );
+
+private:
     int count_motors;
-    int fd;
-    int connect ( std::string device );
-    int disconnect();
+    int serial_fd;
 
-    public:
-        MotorController();
-        ~MotorController();
-
-        void dispense(int slot, int count);
 };
 
 #endif

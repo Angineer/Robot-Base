@@ -12,7 +12,7 @@ const int d2_pin = 3;
 void setup()
 {
     // Start up the serial connection
-    Serial.begin ( 115200 );
+    Serial.begin ( 19200 );
 
     // Motor control pins
     pinMode ( d1_pin, OUTPUT );
@@ -22,7 +22,7 @@ void setup()
 void dispense ( int slot, int quant ) 
 {
     // Convert quant to time
-    int time = quant * 100;
+    unsigned long time = quant * 100;
 
     // Run the motor for that amount of time
     digitalWrite ( slot, HIGH );

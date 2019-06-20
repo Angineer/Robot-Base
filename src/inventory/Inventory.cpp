@@ -3,7 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-Inventory::Inventory ( std::string inventory_file )
+Inventory::Inventory ( std::string inventory_file ) :
+    controller ( "/dev/ttyACM0" )
 {
     // Try to load inventory file
     std::cout << "Loading inventory from config file "
