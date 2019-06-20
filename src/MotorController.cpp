@@ -51,10 +51,18 @@ int MotorController::disconnect(){
     close(fd);
 }
 
-void MotorController::dispense(int slot, int count){
+void MotorController::dispense ( int slot, int count ){
     if(fd > 0){
-        std::string message = "f" + slot + count;
-        int n = write(fd, message.c_str(), message.size());
+        // Messages are 2 bytes long. The first byte is the slot number and the
+        // second is the quantity.
+        char c_slot ( slot );
+        char c_count ( count );
+        write ( fd, &c_slot, 1 );
+        write ( fd, &c_count, 1 );
+
+        // Read back an ack
+        char ack;
+        read ( fd, &ack, 1 );
     }
     else{
         std::cout << "Motor controller disconnected!" << std::endl;
