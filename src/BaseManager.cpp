@@ -237,8 +237,9 @@ void BaseManager::process_queue(){
         }
 
         state = State::DISPENSE;
-        Order order_msg ( order );
-        mobile_client.send ( order_msg );
+        // TODO
+        // Order order_msg ( order );
+        // mobile_client.send ( order_msg );
 
         std::map<std::string, int> curr_inv = inventory.summarize_inventory();
 

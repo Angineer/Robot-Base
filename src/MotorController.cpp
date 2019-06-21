@@ -24,14 +24,18 @@ MotorController::MotorController ( std::string device ) :
     tcgetattr(serial_fd, &options);
 
     // Set baud rate
-    cfsetispeed(&options, B19200);
-    cfsetospeed(&options, B19200);
+    cfsetispeed(&options, B9600);
+    cfsetospeed(&options, B9600);
 
     // 8N1
     options.c_cflag &= ~PARENB;
     options.c_cflag &= ~CSTOPB;
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
+
+    // Timeout of 1 sec
+    options.c_cc[VTIME] = 10;
+    options.c_cc[VMIN] = 0; 
 
     /* set the options */
     tcsetattr(serial_fd, TCSANOW, &options);
@@ -43,20 +47,27 @@ MotorController::~MotorController(){
 
 void MotorController::dispense ( int slot, int count ){
     if ( serial_fd > 0) {
+        char ack = 'n';
+        while ( ack != 'a' ) {
+            // Request a dispense
+            std::cout << "Requesting dispense..." << std::endl;
+            char directive = 'd';
+            write ( serial_fd, &directive, 1 );
+
+            // Check for ACK
+            read ( serial_fd, &ack, 1 );
+
+            // TODO: error on max retries
+        }
+
+        std::cout << "ACK received, sending data" << std::endl;
+
         // Messages are 2 bytes long. The first byte is the slot number and the
         // second is the quantity.
-        char c_slot ( slot );
-        char c_count ( count );
-        std::cout << "Motor contoller writing first byte" << std::endl;
+        char c_slot = static_cast<char> ( slot );
+        char c_count = static_cast<char> ( count );
         write ( serial_fd, &c_slot, 1 );
-        std::cout << "Motor contoller writing second byte" << std::endl;
         write ( serial_fd, &c_count, 1 );
-
-        // Read back an ack
-        char ack;
-        std::cout << "Motor contoller reading ack" << std::endl;
-        read ( serial_fd, &ack, 1 );
-        std::cout << "Motor contoller ACK received: " << ack << std::endl;
     }
     else {
         std::cout << "Motor controller disconnected!" << std::endl;
