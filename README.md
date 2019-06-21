@@ -8,13 +8,8 @@ Requires:
 
 To install, clone this repo and the cereal repo so they are in the same directory. Then, build with CMake:
 
-`cd Robot-Base`
-
-`mkdir build`
-
-`cd build`
-
-`cmake ..`
-
+`cd robot-base`\
+`mkdir build && cd build`\
+`cmake ..`\
 `make`
 
