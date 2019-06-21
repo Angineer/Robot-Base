@@ -12,7 +12,7 @@ const int d2_pin = 3;
 void setup()
 {
     // Start up the serial connection
-    Serial.begin ( 19200 );
+    Serial.begin ( 9600 );
 
     // Motor control pins
     pinMode ( d1_pin, OUTPUT );
@@ -22,7 +22,7 @@ void setup()
 void dispense ( int slot, int quant ) 
 {
     // Convert quant to time
-    unsigned long time = quant * 100;
+    unsigned long time = quant * 2000;
 
     // Run the motor for that amount of time
     digitalWrite ( slot, HIGH );
@@ -32,19 +32,28 @@ void dispense ( int slot, int quant )
 
 void loop()
 {
-    // Wait for serial input
-    if (Serial.available() > 0) {
-        // Read the two data bytes
-        int slot = Serial.read();
-        int quant = Serial.read();
+    // Check for serial input
+    if ( Serial.available() > 0 ) {
+        // Read in the directive byte
+        char directive = Serial.read();
 
-        // Send an ack byte
-        Serial.write ( 'a' );
+        if ( directive == 'd' ) { // dispense
+            // Send ACK
+            Serial.write ( 'a' );
 
-        // Dispense based on input
-        if ( slot == 1 ) slot = d1_pin;
-        else if ( slot == 2 ) slot = d2_pin;
+            // Read the two data bytes
+            int slot = Serial.read();
+            int quant = Serial.read();
 
-        dispense ( slot, quant );
+            // Dispense based on input
+            if ( slot == 1 ) slot = d1_pin;
+            else if ( slot == 2 ) slot = d2_pin;
+            else return;
+
+            dispense ( slot, quant );
+        } else {
+            // Send NACK
+            Serial.write ( 'n' );
+        }
     }
 }
