@@ -5,7 +5,7 @@ project ( robot-base )
 find_package ( Threads )
 
 # Cereal dependency
-set ( CEREAL_INCLUDE_FOLDER "../cereal/include" CACHE FILEPATH "Cereal include folder" )
+set ( CEREAL_INCLUDE_FOLDER $ENV{HOME}/cereal/include CACHE FILEPATH "Cereal include folder" )
 
 # Inventory server
 add_executable ( inventory_server ./src/inventory_server.cpp

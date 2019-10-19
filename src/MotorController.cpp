@@ -48,6 +48,7 @@ MotorController::~MotorController(){
 void MotorController::dispense ( int slot, int count ){
     if ( serial_fd > 0) {
         char ack = 'n';
+        size_t attempts { 0 };
         while ( ack != 'a' ) {
             // Request a dispense
             std::cout << "Requesting dispense..." << std::endl;
@@ -57,7 +58,10 @@ void MotorController::dispense ( int slot, int count ){
             // Check for ACK
             read ( serial_fd, &ack, 1 );
 
-            // TODO: error on max retries
+            if ( ++attempts >= 10 ) {
+                std::cout << "Motor controller communication failure"
+                          << std::endl;
+            }
         }
 
         std::cout << "ACK received, sending data" << std::endl;
@@ -68,8 +72,7 @@ void MotorController::dispense ( int slot, int count ){
         char c_count = static_cast<char> ( count );
         write ( serial_fd, &c_slot, 1 );
         write ( serial_fd, &c_count, 1 );
-    }
-    else {
+    } else {
         std::cout << "Motor controller disconnected!" << std::endl;
     }
 }

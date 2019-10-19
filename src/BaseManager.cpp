@@ -17,7 +17,8 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( SocketType::IP ),
     mobile_client ( SocketType::BLUETOOTH, "B8:27:EB:E4:1C:3C" ),
-    state ( State::IDLE )
+    current_state ( State::IDLE ),
+    expected_state ( State::IDLE )
 {
     // Start heartbeat monitor thread
     std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
@@ -190,9 +191,10 @@ void BaseManager::process_queue(){
     // First, check current status
     // If robot is occupied, do nothing
     // If robot is ready to go and queue has orders, start processing them
-    if (state == State::IDLE && queue.size() > 0){
+    if (current_state == State::IDLE && queue.size() > 0){
 
-        std::cout << "Processing queue with size " << queue.size() << "..." << std::endl;
+        std::cout << "Processing queue with size " << queue.size()
+                  << "..." << std::endl;
 
         // Pop first order off queue
         Order curr_order = queue.front();
@@ -236,10 +238,10 @@ void BaseManager::process_queue(){
             }
         }
 
-        state = State::DISPENSE;
+        expected_state = State::DISPENSE;
         // TODO
-        // Order order_msg ( order );
-        // mobile_client.send ( order_msg );
+        Order order_msg ( order );
+        mobile_client.send ( order_msg );
 
         std::map<std::string, int> curr_inv = inventory.summarize_inventory();
 
@@ -271,13 +273,35 @@ void BaseManager::listen_heartbeat(){
         Command status_inquiry ( "status" );
         std::string msg = mobile_client.send ( status_inquiry );
 
-        // If status changed, process queue
-        if ( msg == "HOME" ) {
-            std::lock_guard<std::mutex> lock ( access_mutex );
-            state = State::IDLE;
-            process_queue();
-        } else if ( msg == "OK" ) {
-            std::cout << "Robie is OK" << std::endl;
+        std::lock_guard<std::mutex> lock ( access_mutex );
+
+        if ( msg == "IDLE" ) {
+            current_state = State::IDLE;
+        } else if ( msg == "DISPENSE" ) {
+            current_state = State::DISPENSE;
+        } else if ( msg == "DELIVER" ) {
+            current_state = State::DELIVER;
+        } else if ( msg == "ERROR" ) {
+            current_state = State::ERROR;
+        }
+
+        // If current state doesn't match expected, determine what action to
+        // take
+        if ( current_state != expected_state ) {
+            if ( current_state == State::IDLE
+                        && expected_state == State::DISPENSE ) {
+                // If Robie is lagging behind, just wait for him to transition
+                // to the next state
+                std::cout << "Waiting for transition..." << std::endl;
+            } else if ( current_state == State::ERROR ) {
+                // TODO: Deal with error states
+                std::cout << "Robie reported an error!" << std::endl;
+            } else {
+                // Update our current state based on what Robie reported
+                std::cout << "State change detected" << std::endl;
+                expected_state = current_state;
+                process_queue();
+            }
         }
     }
 }

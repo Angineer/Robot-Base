@@ -40,7 +40,8 @@ private:
     // Update the inventory levels
     std::string handle_update ( std::string input );
 
-    // Process all items currently in the queue; dispense product as necessary
+    // Process all items currently in the queue; dispense product as necessary.
+    // Must be called with access_mutex held.
     void process_queue();
 
     // Listen for a heartbeat from the mobile platform and set an error if 
@@ -61,11 +62,14 @@ private:
     Client mobile_client;
 
     // The queue of current orders. Should not be accessed unless holding
-    // mutex_queue.
+    // access_mutex.
     std::deque<Order> queue;
 
-    // Current system state. Should not be accessed unless holding mutex_state.
-    State state;
+    // Mobile platform state. current_state is what is being reported by robie.
+    // expected_state is what the base is expecting. Should not be accessed
+    // unless holding access_mutex.
+    State current_state;
+    State expected_state;
 };
 
 #endif
