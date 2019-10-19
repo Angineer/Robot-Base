@@ -33,8 +33,9 @@ MotorController::MotorController ( std::string device ) :
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
 
-    // Timeout of 1 sec
-    options.c_cc[VTIME] = 10;
+    // Timeout of 20 sec. This is necessary because we wait for a response
+    // after a dispense to let us know the hardware is done.
+    options.c_cc[VTIME] = 200;
     options.c_cc[VMIN] = 0; 
 
     /* set the options */
@@ -45,26 +46,23 @@ MotorController::~MotorController(){
     close ( serial_fd );
 }
 
-void MotorController::dispense ( int slot, int count ){
+bool MotorController::dispense ( int slot, int count ){
     if ( serial_fd > 0) {
-        char ack = 'n';
+        // Request a dispense
+        std::cout << "Requesting dispense..." << std::endl;
+        char directive { 'd' };
+        char response { 'n' };
         size_t attempts { 0 };
-        while ( ack != 'a' ) {
-            // Request a dispense
-            std::cout << "Requesting dispense..." << std::endl;
-            char directive = 'd';
+        while ( response != 'a' ) {
             write ( serial_fd, &directive, 1 );
+            read ( serial_fd, &response, 1 );
 
-            // Check for ACK
-            read ( serial_fd, &ack, 1 );
-
-            if ( ++attempts >= 10 ) {
+            if ( response != 'a' && ++attempts >= 10 ) {
                 std::cout << "Motor controller communication failure"
                           << std::endl;
+                return false;
             }
         }
-
-        std::cout << "ACK received, sending data" << std::endl;
 
         // Messages are 2 bytes long. The first byte is the slot number and the
         // second is the quantity.
@@ -72,7 +70,17 @@ void MotorController::dispense ( int slot, int count ){
         char c_count = static_cast<char> ( count );
         write ( serial_fd, &c_slot, 1 );
         write ( serial_fd, &c_count, 1 );
+
+        // When the dispense is complete, we should get another ACK
+        response = 'n';
+        read ( serial_fd, &response, 1 );
+
+        if ( response != 'a' ) {
+            return false;
+        }
     } else {
         std::cout << "Motor controller disconnected!" << std::endl;
+        return false;
     }
+    return true;
 }

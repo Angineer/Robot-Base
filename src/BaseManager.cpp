@@ -206,48 +206,60 @@ void BaseManager::process_queue(){
 
         int remaining, available;
         int start;
+        bool success { true }; // Were we able to dispense the order?
+
+        // Loop over each component of the order
         for (auto it = order.begin(); it != order.end(); ++it){
-
             remaining = it->second;
-            start = 0;
 
-            // Loop through slots until we find enough reserved items to fulfill this component
-            while(remaining > 0){
-                for(int i = start; i < slots.size(); ++i){
+            // Loop through slots until we find enough reserved items to fulfill
+            // this component
+            for ( int i { 0 };
+                  remaining > 0 && i < slots.size();
+                  ++i ) {
 
-                    // If we find a slot that matches, try to dispense from there
-                    if ( slots[i].get_type() == it->first ){
-                        start = i + 1;
-                        available = slots[i].get_count_available();
+                // If we find a slot that matches, try to dispense from there
+                if ( slots[i].get_type() == it->first ){
+                    available = slots[i].get_count_available();
 
+                    if ( available >= remaining ) {
                         // If sufficient items available, dispense remaining component from here
-                        if(available >= remaining){
-                            inventory.dispense(i, remaining);
+                        if ( inventory.dispense(i, remaining) ) {
                             inventory.reserve(i, -remaining);
                             remaining = 0;
+                        } else {
+                            success = false;
+                            break;
                         }
+                    } else {
                         // Otherwise, dispense as much as we can and go to next slot
-                        else{
-                            inventory.dispense(i, available);
+                        if ( inventory.dispense(i, available) ) {
                             inventory.reserve(i, -available);
                             remaining -= available;
+                        } else {
+                            success = false;
+                            break;
                         }
-                        break;
                     }
                 }
             }
+            if ( !success ) break;
         }
 
-        expected_state = State::DISPENSE;
-        // TODO
-        Order order_msg ( order );
-        mobile_client.send ( order_msg );
+        if ( success ) {
+            expected_state = State::DISPENSE;
+            Order order_msg ( order );
+            mobile_client.send ( order_msg );
 
-        std::map<std::string, int> curr_inv = inventory.summarize_inventory();
+            std::map<std::string, int> curr_inv = inventory.summarize_inventory();
 
-        std::cout << "After processing queue, the inventory status is:" << std::endl;
-        for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
-            std::cout << it->second << " x " << it->first << std::endl;
+            std::cout << "After processing queue, the inventory status is:" << std::endl;
+            for (auto it = curr_inv.begin(); it != curr_inv.end(); ++it){
+                std::cout << it->second << " x " << it->first << std::endl;
+            }
+        } else {
+            std::cout << "An error occurred when processing the queue" << std::endl;
+            current_state = State::ERROR;
         }
     }
 }

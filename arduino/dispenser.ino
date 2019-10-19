@@ -61,6 +61,9 @@ void loop()
             else return;
 
             dispense ( slot, quant );
+
+            // Send another signal to indicate dispense is complete
+            Serial.write ( 'a' );
         } else {
             // Send NACK
             Serial.write ( 'n' );

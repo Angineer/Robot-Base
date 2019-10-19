@@ -41,9 +41,9 @@ void Inventory::add ( int slot, int count ){
     slots[slot].add ( count );
 }
 
-void Inventory::dispense ( int slot, int count ){
+bool Inventory::dispense ( int slot, int count ){
     slots[slot].add ( -count );
-    controller.dispense ( slot, count );
+    return controller.dispense ( slot, count );
 }
 
 void Inventory::reserve ( int slot, int count ){

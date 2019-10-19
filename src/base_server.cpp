@@ -1,10 +1,6 @@
 #include "BaseManager.h"
-#include "Server.h"
-#include "inventory/Inventory.h"
 
 #include <iostream>
-
-using namespace std;
 
 int main ( int argc, char *argv[] )
 {
@@ -21,8 +17,6 @@ int main ( int argc, char *argv[] )
 
     // Create the manager
     BaseManager manager ( inv_file );
-
-    std::cout << "Starting Inventory Manager" << std::endl;
 
     // Run forever
     manager.run();

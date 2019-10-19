@@ -8,7 +8,7 @@ public:
     MotorController ( std::string device );
     ~MotorController();
 
-    void dispense ( int slot, int count );
+    bool dispense ( int slot, int count );
 
 private:
     int count_motors;

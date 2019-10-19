@@ -17,7 +17,7 @@ public:
     void set_type ( int slot, std::string type );
     void add ( int slot, int count );
 
-    void dispense ( int slot, int count );
+    bool dispense ( int slot, int count );
     void reserve ( int slot, int count );
 
     std::map<std::string, int> summarize_inventory() const;

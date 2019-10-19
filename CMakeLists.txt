@@ -8,17 +8,17 @@ find_package ( Threads )
 set ( CEREAL_INCLUDE_FOLDER $ENV{HOME}/cereal/include CACHE FILEPATH "Cereal include folder" )
 
 # Inventory server
-add_executable ( inventory_server ./src/inventory_server.cpp
-                                  ./src/BaseManager.cpp
-                                  ./src/MotorController.cpp
-                                  ./src/inventory/Inventory.cpp
-                                  ./src/inventory/Slot.cpp )
-set_property ( TARGET inventory_server PROPERTY CXX_STANDARD 11 )
-target_include_directories ( inventory_server PUBLIC ./include
-                                              PUBLIC ./include/inventory
-                                              PUBLIC $ENV{HOME}/robot-comm/include
-                                              PUBLIC ${CEREAL_INCLUDE_FOLDER} )
-target_link_libraries ( inventory_server robot-comm ${CMAKE_THREAD_LIBS_INIT} )
+add_executable ( base_server ./src/base_server.cpp
+                             ./src/BaseManager.cpp
+                             ./src/MotorController.cpp
+                             ./src/inventory/Inventory.cpp
+                             ./src/inventory/Slot.cpp )
+set_property ( TARGET base_server PROPERTY CXX_STANDARD 11 )
+target_include_directories ( base_server PUBLIC ./include
+                                         PUBLIC ./include/inventory
+                                         PUBLIC $ENV{HOME}/robot-comm/include
+                                         PUBLIC ${CEREAL_INCLUDE_FOLDER} )
+target_link_libraries ( base_server robot-comm ${CMAKE_THREAD_LIBS_INIT} )
 
 # Admin Client
 add_executable ( admin_client ./src/admin_client.cpp )
