@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <Arduino.h>
+
 class MotorController{
 public:
     MotorController ( std::string device );
@@ -11,9 +13,11 @@ public:
     bool dispense ( int slot, int count );
 
 private:
-    int count_motors;
-    int serial_fd;
+    // The Arduino that runs the motors
+    Arduino arduino;
 
+    // How many motors are attached
+    int count_motors;
 };
 
 #endif

@@ -22,7 +22,7 @@ void Slot::add ( int quantity ) {
     count += quantity;
 }
 
-bool Slot::reserve ( int quantity ) {
+void Slot::reserve ( int quantity ) {
     reserved_count += quantity;
 }
 

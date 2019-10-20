@@ -11,7 +11,7 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
-#include "Command.h"
+#include <Command.h>
 
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
@@ -88,12 +88,13 @@ bool BaseManager::handle_order ( std::string input ){
 
     // Read in new order
     std::stringstream ss(input);
+    std::string location;
     std::map<std::string, int> items;
 
     {
         cereal::BinaryInputArchive iarchive(ss); // Create an input archive
 
-        iarchive(items); // Read the data from the archive
+        iarchive(location, items); // Read the data from the archive
     }
 
     // Double check order validity
@@ -160,7 +161,7 @@ bool BaseManager::handle_order ( std::string input ){
         }
 
         // Add order to queue
-        queue.emplace_back(items);
+        queue.emplace_back ( location, items );
 
         std::cout << "New order placed!" << std::endl;
     }
@@ -200,7 +201,7 @@ void BaseManager::process_queue(){
         Order curr_order = queue.front();
         queue.pop_front();
 
-        std::map<std::string, int> order = curr_order.get_order();
+        std::map<std::string, int> order_contents = curr_order.get_order();
 
         std::vector<Slot> slots = inventory.get_slots();
 
@@ -209,7 +210,7 @@ void BaseManager::process_queue(){
         bool success { true }; // Were we able to dispense the order?
 
         // Loop over each component of the order
-        for (auto it = order.begin(); it != order.end(); ++it){
+        for (auto it = order_contents.begin(); it != order_contents.end(); ++it){
             remaining = it->second;
 
             // Loop through slots until we find enough reserved items to fulfill
@@ -248,8 +249,7 @@ void BaseManager::process_queue(){
 
         if ( success ) {
             expected_state = State::DISPENSE;
-            Order order_msg ( order );
-            mobile_client.send ( order_msg );
+            mobile_client.send ( curr_order );
 
             std::map<std::string, int> curr_inv = inventory.summarize_inventory();
 
@@ -287,15 +287,7 @@ void BaseManager::listen_heartbeat(){
 
         std::lock_guard<std::mutex> lock ( access_mutex );
 
-        if ( msg == "IDLE" ) {
-            current_state = State::IDLE;
-        } else if ( msg == "DISPENSE" ) {
-            current_state = State::DISPENSE;
-        } else if ( msg == "DELIVER" ) {
-            current_state = State::DELIVER;
-        } else if ( msg == "ERROR" ) {
-            current_state = State::ERROR;
-        }
+        current_state = stringToState ( msg );
 
         // If current state doesn't match expected, determine what action to
         // take

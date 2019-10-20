@@ -5,9 +5,9 @@ project ( robot-base )
 find_package ( Threads )
 
 # Cereal dependency
-set ( CEREAL_INCLUDE_FOLDER $ENV{HOME}/cereal/include CACHE FILEPATH "Cereal include folder" )
+set ( CEREAL_INCLUDE_FOLDER ../cereal/include CACHE FILEPATH "Cereal include folder" )
 
-# Inventory server
+# Base server
 add_executable ( base_server ./src/base_server.cpp
                              ./src/BaseManager.cpp
                              ./src/MotorController.cpp
@@ -16,7 +16,7 @@ add_executable ( base_server ./src/base_server.cpp
 set_property ( TARGET base_server PROPERTY CXX_STANDARD 11 )
 target_include_directories ( base_server PUBLIC ./include
                                          PUBLIC ./include/inventory
-                                         PUBLIC $ENV{HOME}/robot-comm/include
+                                         PUBLIC ../robot-comm/include
                                          PUBLIC ${CEREAL_INCLUDE_FOLDER} )
 target_link_libraries ( base_server robot-comm ${CMAKE_THREAD_LIBS_INIT} )
 
@@ -25,5 +25,5 @@ add_executable ( admin_client ./src/admin_client.cpp )
 set_property ( TARGET admin_client PROPERTY CXX_STANDARD 11 )
 target_include_directories ( admin_client PUBLIC ./include
                                           PUBLIC ./include/inventory
-                                          PUBLIC $ENV{HOME}/robot-comm/include )
+                                          PUBLIC ../robot-comm/include )
 target_link_libraries ( admin_client robot-comm )

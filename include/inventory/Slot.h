@@ -12,7 +12,7 @@ public:
     void set_type ( const std::string& new_type );
     int get_count() const;
     void add ( int quantity );
-    bool reserve ( int quantity );
+    void reserve ( int quantity );
 
 private:
     std::string type;
