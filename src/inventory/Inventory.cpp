@@ -3,7 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-Inventory::Inventory ( std::string inventory_file ) :
+Inventory::Inventory ( std::string file ) :
+    inventory_file ( file ),
     controller ( "/dev/ttyACM0" )
 {
     // Try to load inventory file
@@ -27,6 +28,10 @@ Inventory::Inventory ( std::string inventory_file ) :
         std::cout << "Inventory file not found, created a new one"
                   << std::endl;
     }
+}
+
+Inventory::~Inventory() {
+    // TODO: Save inventory back to disk
 }
 
 std::vector<Slot> Inventory::get_slots() const{

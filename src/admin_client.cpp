@@ -10,7 +10,7 @@
 
 
 void shutdown(int signum){
-    std::cout << "Stopping Admin Client" << std::endl;
+    std::cout << "Stopping admin client" << std::endl;
     exit(0);
 }
 

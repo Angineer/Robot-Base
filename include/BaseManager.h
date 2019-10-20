@@ -22,9 +22,6 @@ public:
     // Start the inventory server
     void run();
 
-    // Stop the inventory server and save inventory contents to disk
-    void shutdown();
-
 private:
     // Callback function that the inventory server will use for processing new
     // messages on its socket. Depending on the message type, it will call one

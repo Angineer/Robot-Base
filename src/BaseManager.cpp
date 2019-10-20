@@ -25,7 +25,7 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     t.detach();
 }
 
-std::string BaseManager::handle_input ( std::string input ){
+std::string BaseManager::handle_input ( std::string input ) {
     char code = input[0];
     std::string message = input.substr(1, std::string::npos);
     std::string response;
@@ -109,6 +109,13 @@ bool BaseManager::handle_order ( std::string input ){
         if ( item_in_inv == existing.end() ){
             std::cout << "Order contains item not in inventory: "
                       << it->first << "!" << std::endl;
+            valid_order = false;
+            break;
+        }
+        if ( it->second <= 0 ) {
+            std::cout << "Unreasonable quantity requested: "
+                      << it->second << " x " << it->first
+                      << "!" << std::endl;
             valid_order = false;
             break;
         }
@@ -247,8 +254,10 @@ void BaseManager::process_queue(){
             if ( !success ) break;
         }
 
+        // The order has been dispensed, so Robie should be ready to go. Send
+        // him the destination info and wait for him to get rolling.
         if ( success ) {
-            expected_state = State::DISPENSE;
+            expected_state = State::DELIVER;
             mobile_client.send ( curr_order );
 
             std::map<std::string, int> curr_inv = inventory.summarize_inventory();
@@ -274,10 +283,6 @@ void BaseManager::run(){
     server.serve ( callback_func );
 }
 
-void BaseManager::shutdown(){
-    server.shutdown();
-}
-
 void BaseManager::listen_heartbeat(){
     // Query for updates from the mobile robot every 2 seconds
     while ( true ) {
@@ -293,13 +298,12 @@ void BaseManager::listen_heartbeat(){
         // take
         if ( current_state != expected_state ) {
             if ( current_state == State::IDLE
-                        && expected_state == State::DISPENSE ) {
+                        && expected_state == State::DELIVER ) {
                 // If Robie is lagging behind, just wait for him to transition
                 // to the next state
                 std::cout << "Waiting for transition..." << std::endl;
             } else if ( current_state == State::ERROR ) {
                 // TODO: Deal with error states
-                std::cout << "Robie reported an error!" << std::endl;
             } else {
                 // Update our current state based on what Robie reported
                 std::cout << "State change detected" << std::endl;
