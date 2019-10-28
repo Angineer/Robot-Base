@@ -22,12 +22,13 @@ bool MotorController::dispense ( int slot, int count ){
     size_t attempts { 0 };
     while ( response != 'a' ) {
         if ( !arduino.sendByte ( 'd' ) ) { // "dispense"
+            std::cout << "Motor controller send failure" << std::endl;
             return false;
         }
         response = arduino.receiveByte();
 
         if ( response != 'a' && ++attempts >= 10 ) {
-            std::cout << "Motor controller communication failure"
+            std::cout << "Motor controller receive failure"
                       << std::endl;
             return false;
         }
@@ -39,6 +40,8 @@ bool MotorController::dispense ( int slot, int count ){
 
     // When the dispense is complete, we should get another ACK
     if ( arduino.receiveByte() != 'a' ) {
+        std::cout << "Motor controller finalize failure"
+                  << std::endl;
         return false;
     }
 
