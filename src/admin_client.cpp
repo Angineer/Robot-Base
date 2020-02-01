@@ -43,7 +43,7 @@ void send_order( Client& client ){
         items.insert(std::pair<std::string, int>(name, quant));
     }
 
-    Order order ( "wherever", items );
+    Order order ( "couch", items );
 
     std::cout << client.send(order) << std::endl;
 }

@@ -294,6 +294,8 @@ void BaseManager::listen_heartbeat(){
 
         current_state = stringToState ( msg );
 
+        //std::cout << "Current robot state: " << msg << std::endl;
+
         // If current state doesn't match expected, determine what action to
         // take
         if ( current_state != expected_state ) {
@@ -306,7 +308,11 @@ void BaseManager::listen_heartbeat(){
                 // TODO: Deal with error states
             } else {
                 // Update our current state based on what Robie reported
-                std::cout << "State change detected" << std::endl;
+                std::cout << "State change detected: "
+                          << stateToString ( expected_state ) 
+                          << "->" 
+                          << stateToString ( current_state )
+                          << std::endl;
                 expected_state = current_state;
                 process_queue();
             }
