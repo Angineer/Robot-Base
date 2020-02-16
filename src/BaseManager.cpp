@@ -54,9 +54,10 @@ std::string BaseManager::handle_input ( std::string input ) {
 }
 
 std::string BaseManager::handle_command ( std::string input ) {
-    if ( input == "status" ){
-        return "Not implemented yet";
-    } else if (input == "inv"){
+    if ( input == "status" ) {
+        std::string stateStr = stateToString ( current_state );
+        return "Robie's status is " + stateStr;
+    } else if (input == "inv") {
         std::vector<Slot> existing = inventory.get_slots();
         std::stringstream inv_ss;
 

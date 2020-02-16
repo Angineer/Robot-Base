@@ -103,9 +103,10 @@ int main(int argc, char *argv[])
                 std::cout << "order     Place a new order" << std::endl;
                 std::cout << "update    Update an individual slot" << std::endl;
                 std::cout << "help      Print this message" << std::endl;
-                std::cout << "exit      Quit" << std::endl;
+                std::cout << "exit/quit Quit" << std::endl;
             }
             else if (user_input == "exit") shutdown(0);
+            else if (user_input == "quit") shutdown(0);
             else std::cout << "Not recognized (type 'help' for commands)" << std::endl;
         }
     }
