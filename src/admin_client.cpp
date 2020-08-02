@@ -43,7 +43,7 @@ void send_order( Client& client ){
     }
 
     Order order;
-    order.set_location ( "couch" );
+    order.set_location ( 0 );
     order.set_items ( items );
 
     std::cout << client.send ( order ) << std::endl;

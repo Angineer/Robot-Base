@@ -81,11 +81,12 @@ std::string BaseManager::handle_command ( const Command &command )
         return response.serialize();
     } else if ( command.get_command() == "locations" ) {
         size_t loc_count = config.getConfig<size_t> ( "location_count" );
-        std::vector<std::string> locations;
+        std::map<int, std::string> locations;
         for ( int i { 0 };
               i < config.getConfig<int> ( "location_count" );
               ++i ) {
-            locations.emplace_back (
+            locations.emplace (
+                i,
                 config.getConfig<std::string> (
                     "location_" + std::to_string ( i ) + "_name" ) );
         }
@@ -102,7 +103,6 @@ bool BaseManager::handle_order ( const Order& order )
     std::cout << "Processing order..." << std::endl;
 
     // Read in new order
-    std::string location = order.get_location();
     std::map<std::string, int> items = order.get_items();
 
     // Double check order validity
