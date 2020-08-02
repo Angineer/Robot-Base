@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 
+#include "BaseConfig.h"
 #include "Command.h"
 #include "Client.h"
 #include "Order.h"
@@ -69,6 +70,9 @@ private:
     // unless holding access_mutex.
     State current_state;
     State expected_state;
+
+    // User configuration
+    BaseConfig config;
 };
 
 #endif

@@ -11,6 +11,9 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
+#include "InventoryMsg.h"
+#include "Locations.h"
+
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( SocketType::IP ),
@@ -18,11 +21,9 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     current_state ( State::IDLE ),
     expected_state ( State::IDLE )
 {
-    /*
     // Start heartbeat monitor thread
     std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
     t.detach();
-    */
 }
 
 std::string BaseManager::handle_input ( std::string input )
@@ -73,17 +74,25 @@ std::string BaseManager::handle_command ( const Command &command )
             if ( it != --existing.end() ) inv_ss << "\n";
         }
         return inv_ss.str();
-    } else if ( command.get_command() == "summary" ){
+    } else if ( command.get_command() == "inventory" ){
         std::map<std::string, int> existing = inventory.summarize_inventory();
-        std::stringstream inv_ss;
-
-        for ( const auto &item : existing ){
-            inv_ss << item.first << ","
-                   << item.second << ";";
+        InventoryMsg response;
+        response.set_items ( existing );
+        return response.serialize();
+    } else if ( command.get_command() == "locations" ) {
+        size_t loc_count = config.getConfig<size_t> ( "location_count" );
+        std::vector<std::string> locations;
+        for ( int i { 0 };
+              i < config.getConfig<int> ( "location_count" );
+              ++i ) {
+            locations.emplace_back (
+                config.getConfig<std::string> (
+                    "location_" + std::to_string ( i ) + "_name" ) );
         }
-        return inv_ss.str();
+        Locations response;
+        response.set_locations ( locations );
+        return response.serialize();
     }
-
 
     return "Command not recognized";
 }

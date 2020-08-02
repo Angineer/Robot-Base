@@ -2,6 +2,7 @@
 
 BaseConfig::BaseConfig()
 {
-    configMap.emplace ( "home_id", "0" );
-    configMap.emplace ( "couch_id", "1" );
+    configMap.emplace ( "location_count", "2" );
+    configMap.emplace ( "location_0_name", "couch" );
+    configMap.emplace ( "location_1_name", "table" );
 }
