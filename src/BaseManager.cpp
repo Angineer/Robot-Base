@@ -11,8 +11,6 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
-#include <Command.h>
-
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
     server ( SocketType::IP ),
@@ -25,17 +23,19 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     t.detach();
 }
 
-std::string BaseManager::handle_input ( std::string input ) {
+std::string BaseManager::handle_input ( std::string input )
+{
     char code = input[0];
-    std::string message = input.substr(1, std::string::npos);
     std::string response;
 
     std::lock_guard<std::mutex> lock ( access_mutex );
 
-    if (code == 'c'){
-        response = handle_command(message);
-    } else if (code == 'o'){
-        bool check = handle_order(message);
+    if ( code == 'c' ) {
+        Command command { input };
+        response = handle_command ( command );
+    } else if ( code == 'o' ) {
+        Order order { input };
+        bool check = handle_order ( order );
         if (check){
             response = "Order placed";
         }
@@ -43,7 +43,8 @@ std::string BaseManager::handle_input ( std::string input ) {
             response = "Could not place order";
         }
     } else if (code == 'u'){
-        response = handle_update(message);
+        Update update { input };
+        response = handle_update ( update );
     } else{
         response = "Unrecognized input!";
     }
@@ -53,11 +54,12 @@ std::string BaseManager::handle_input ( std::string input ) {
     return response;
 }
 
-std::string BaseManager::handle_command ( std::string input ) {
-    if ( input == "status" ) {
+std::string BaseManager::handle_command ( const Command &command )
+{
+    if ( command.get_command() == "status" ) {
         std::string stateStr = stateToString ( current_state );
         return "Robie's status is " + stateStr;
-    } else if (input == "inv") {
+    } else if ( command.get_command() == "inv" ) {
         std::vector<Slot> existing = inventory.get_slots();
         std::stringstream inv_ss;
 
@@ -69,34 +71,28 @@ std::string BaseManager::handle_command ( std::string input ) {
             if ( it != --existing.end() ) inv_ss << "\n";
         }
         return inv_ss.str();
-    } else if (input == "summary"){
+    } else if ( command.get_command() == "summary" ){
         std::map<std::string, int> existing = inventory.summarize_inventory();
         std::stringstream inv_ss;
 
-        for ( auto it = existing.begin(); it != existing.end(); ++it ){
-            inv_ss << it->second << " "
-                   << it->first;
-            if(it != --existing.end()) inv_ss << "\n";
+        for ( const auto &item : existing ){
+            inv_ss << item.first << ","
+                   << item.second << ";";
         }
         return inv_ss.str();
     }
 
+
     return "Command not recognized";
 }
 
-bool BaseManager::handle_order ( std::string input ){
+bool BaseManager::handle_order ( const Order& order )
+{
     std::cout << "Processing order..." << std::endl;
 
     // Read in new order
-    std::stringstream ss(input);
-    std::string location;
-    std::map<std::string, int> items;
-
-    {
-        cereal::BinaryInputArchive iarchive(ss); // Create an input archive
-
-        iarchive(location, items); // Read the data from the archive
-    }
+    std::string location = order.get_location();
+    std::map<std::string, int> items = order.get_items();
 
     // Double check order validity
     bool valid_order = true;
@@ -169,7 +165,7 @@ bool BaseManager::handle_order ( std::string input ){
         }
 
         // Add order to queue
-        queue.emplace_back ( location, items );
+        queue.push_back ( order );
 
         std::cout << "New order placed!" << std::endl;
     }
@@ -177,18 +173,12 @@ bool BaseManager::handle_order ( std::string input ){
     return valid_order;
 }
 
-std::string BaseManager::handle_update(std::string input){
-    // Read in new order
-    std::stringstream ss(input);
+std::string BaseManager::handle_update ( const Update& update )
+{
     int slot_id;
     std::string new_type;
     int new_quant;
-
-    {
-        cereal::BinaryInputArchive iarchive(ss); // Create an input archive
-
-        iarchive(slot_id, new_type, new_quant); // Read the data from the archive
-    }
+    std::tie ( slot_id, new_type, new_quant ) = update.get_update();
 
     inventory.set_type ( slot_id, new_type );
     inventory.add ( slot_id, new_quant );
@@ -209,7 +199,7 @@ void BaseManager::process_queue(){
         Order curr_order = queue.front();
         queue.pop_front();
 
-        std::map<std::string, int> order_contents = curr_order.get_order();
+        std::map<std::string, int> order_contents = curr_order.get_items();
 
         std::vector<Slot> slots = inventory.get_slots();
 

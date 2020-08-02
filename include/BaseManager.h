@@ -5,11 +5,13 @@
 #include <mutex>
 #include <string>
 
+#include "Command.h"
 #include "Client.h"
 #include "Order.h"
 #include "Server.h"
 #include "inventory/Inventory.h"
 #include "State.h"
+#include "Update.h"
 
 class BaseManager
 {
@@ -29,13 +31,13 @@ private:
     std::string handle_input ( std::string input );
 
     // Handle a command
-    std::string handle_command ( std::string input );
+    std::string handle_command ( const Command& command );
 
     // Add a new order to the queue
-    bool handle_order ( std::string input );
+    bool handle_order ( const Order& order );
 
     // Update the inventory levels
-    std::string handle_update ( std::string input );
+    std::string handle_update ( const Update& update );
 
     // Process all items currently in the queue; dispense product as necessary.
     // Must be called with access_mutex held.

@@ -15,57 +15,56 @@ void shutdown(int signum){
 }
 
 void send_command( Client& client, std::string command_str){
-    Command command(command_str);
+    Command command;
+    command.set_command ( command_str );
 
-    std::cout << client.send(command) << std::endl;
+    std::cout << client.send ( command ) << std::endl;
 }
 
 void send_order( Client& client ){
-    std::string user_input; // Reading directly from cin was giving me issues
-    int count_items;
-    std::string name;
-    int quant;
     std::map<std::string, int> items;
 
-    std::cout << "-----New order-----\n";
-    std::cout << "How many components? ";
-    getline(std::cin, user_input);
-    count_items = stoi(user_input);
-
-    for (int i=0; i<count_items; i++){
+    std::cout << "-----New order-----" << std::endl;
+    std::cout << "Press enter when done" << std::endl;
+    while ( true ) {
+        std::string name { "None" };
+        std::string quant;
 
         std::cout << "Item type: ";
         getline(std::cin, name);
         std::cout << "Quantity: ";
-        getline(std::cin, user_input);
-        quant = stoi(user_input);
+        getline(std::cin, quant);
 
-        items.insert(std::pair<std::string, int>(name, quant));
+        if ( name.empty() ) {
+            break;
+        }
+
+        items.insert( { name, stoi ( quant ) } );
     }
 
-    Order order ( "couch", items );
+    Order order;
+    order.set_location ( "couch" );
+    order.set_items ( items );
 
-    std::cout << client.send(order) << std::endl;
+    std::cout << client.send ( order ) << std::endl;
 }
 
 void send_update( Client& client ){
-    std::string user_input; // Reading directly from cin was giving me issues
-    int slot_id;
+    std::string slot_id;
     std::string new_type;
-    int new_quant;
+    std::string new_quant;
 
     std::cout << "which slot? ";
-    getline(std::cin, user_input);
-    slot_id = stoi(user_input);
+    getline(std::cin, slot_id);
     std::cout << "what type? ";
     getline(std::cin, new_type);
     std::cout << "how many? ";
-    getline(std::cin, user_input);
-    new_quant = stoi(user_input);
+    getline(std::cin, new_quant);
 
-    Update update(slot_id, new_type, new_quant);
+    Update update;
+    update.set_update ( stoi ( slot_id ), new_type, stoi ( new_quant ) );
 
-    std::cout << client.send(update) << std::endl;
+    std::cout << client.send ( update ) << std::endl;
 }
 
 int main(int argc, char *argv[])
