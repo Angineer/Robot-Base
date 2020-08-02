@@ -18,9 +18,11 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     current_state ( State::IDLE ),
     expected_state ( State::IDLE )
 {
+    /*
     // Start heartbeat monitor thread
     std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
     t.detach();
+    */
 }
 
 std::string BaseManager::handle_input ( std::string input )
@@ -42,7 +44,7 @@ std::string BaseManager::handle_input ( std::string input )
         else{
             response = "Could not place order";
         }
-    } else if (code == 'u'){
+    } else if ( code == 'u' ){
         Update update { input };
         response = handle_update ( update );
     } else{
@@ -278,7 +280,8 @@ void BaseManager::listen_heartbeat(){
     // Query for updates from the mobile robot every 2 seconds
     while ( true ) {
         std::this_thread::sleep_for ( std::chrono::seconds ( 2 ) );
-        Command status_inquiry ( "status" );
+        Command status_inquiry;
+        status_inquiry.set_command ( "status" );
         std::string msg = mobile_client.send ( status_inquiry );
 
         std::lock_guard<std::mutex> lock ( access_mutex );
