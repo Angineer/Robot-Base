@@ -22,7 +22,11 @@ public:
     bool dispense ( int slot, int count );
     void reserve ( int slot, int count );
 
-    std::map<std::string, int> summarize_inventory() const;
+    // Generate a summary of the current inventory by item type
+    // @param include_reserved If true, include reserved items in the inventory
+    //        count
+    std::map<std::string, int> summarize_inventory (
+        bool include_reserved = false ) const;
 private:
     // Helper functions to manage reading from/writing to disk
     void load_from_disk();

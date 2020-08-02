@@ -22,34 +22,42 @@ std::vector<Slot> InventoryManager::get_slots() const{
 
 void InventoryManager::set_type ( int slot, std::string type ){
     slots[slot].set_type ( type );
+    save_to_disk();
 }
 
 void InventoryManager::add ( int slot, int count ){
     slots[slot].add ( count );
+    save_to_disk();
 }
 
 bool InventoryManager::dispense ( int slot, int count ){
     slots[slot].add ( -count );
+    save_to_disk();
     return controller.dispense ( slot, count );
 }
 
 void InventoryManager::reserve ( int slot, int count ){
     slots[slot].reserve ( count );
+    save_to_disk();
 }
 
-std::map<std::string, int> InventoryManager::summarize_inventory() const{
+std::map<std::string, int> InventoryManager::summarize_inventory (
+    bool include_reserved ) const
+{
     std::map<std::string, int> curr_inventory;
 
     for ( auto it = slots.begin(); it != slots.end(); ++it ){
-        // If slot type already in map, combine them
         auto existing = curr_inventory.find ( it->get_type() );
-        if(existing != curr_inventory.end()){
-            existing->second += it->get_count_available();
-        }
-        // Else, add a new entry for the type
-        else{
+        if ( existing != curr_inventory.end() ) {
+            // If there are multiple slots of the same type, combine them
+            existing->second += include_reserved ? it->get_count_available()
+                                                 : it->get_count();
+        } else {
+            // Else, add a new entry for the type
             curr_inventory.insert (
-                    std::pair<std::string, int> ( it->get_type(), it->get_count_available() ) );
+                std::pair<std::string, int> (
+                    it->get_type(), include_reserved ? it->get_count_available()
+                                                     : it->get_count() ) );
         }
     }
     return curr_inventory;
@@ -85,7 +93,7 @@ void InventoryManager::load_from_disk() {
 
 void InventoryManager::save_to_disk() {
     Inventory inventory;
-    inventory.set_items ( summarize_inventory() );
+    inventory.set_items ( summarize_inventory ( true ) );
 
     std::ofstream save_file ( inventory_file );
     save_file << inventory.serialize();
