@@ -62,18 +62,6 @@ std::string BaseManager::handle_command ( const Command &command )
     if ( command.get_command() == "status" ) {
         std::string stateStr = stateToString ( current_state );
         return "Robie's status is " + stateStr;
-    } else if ( command.get_command() == "inv" ) {
-        std::vector<Slot> existing = inventory.get_slots();
-        std::stringstream inv_ss;
-
-        for ( auto it = existing.begin(); it != existing.end(); ++it ){
-            inv_ss << it - existing.begin()
-                   << ": " << it->get_type()
-                   << ", " << it->get_count()
-                   << ", " << it->get_count_available();
-            if ( it != --existing.end() ) inv_ss << "\n";
-        }
-        return inv_ss.str();
     } else if ( command.get_command() == "inventory" ){
         std::map<std::string, int> existing = inventory.summarize_inventory();
         InventoryMsg response;
@@ -82,8 +70,9 @@ std::string BaseManager::handle_command ( const Command &command )
     } else if ( command.get_command() == "locations" ) {
         size_t loc_count = config.getConfig<size_t> ( "location_count" );
         std::map<int, std::string> locations;
-        for ( int i { 0 };
-              i < config.getConfig<int> ( "location_count" );
+        // Locations indices start at 1 because 0 is the home base
+        for ( int i { 1 };
+              i < config.getConfig<int> ( "location_count" ) + 1;
               ++i ) {
             locations.emplace (
                 i,
