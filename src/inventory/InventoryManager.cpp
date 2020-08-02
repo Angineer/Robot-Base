@@ -21,7 +21,11 @@ std::vector<Slot> InventoryManager::get_slots() const{
 }
 
 void InventoryManager::set_type ( int slot, std::string type ){
-    slots[slot].set_type ( type );
+    if ( slot > slots.size() - 1 ) {
+        slots.emplace_back ( type );
+    } else {
+        slots[slot].set_type ( type );
+    }
     save_to_disk();
 }
 
@@ -32,7 +36,6 @@ void InventoryManager::add ( int slot, int count ){
 
 bool InventoryManager::dispense ( int slot, int count ){
     slots[slot].add ( -count );
-    save_to_disk();
     return controller.dispense ( slot, count );
 }
 

@@ -57,7 +57,7 @@ void loop()
 
             // Dispense based on input
             if ( slot == 1 ) slot = d1n_pin;
-            else if ( slot == 2 ) slot = d2n_pin;
+            else if ( slot == 0 ) slot = d2n_pin;
             else return;
 
             dispense ( slot, quant );
