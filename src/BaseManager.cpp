@@ -14,7 +14,7 @@
 #include "Inventory.h"
 #include "Locations.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
