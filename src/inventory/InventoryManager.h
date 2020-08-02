@@ -8,15 +8,12 @@
 
 #include "inventory/Slot.h"
 
-class Inventory
+class InventoryManager
 {
 public:
     // Constructor
     // @param file The file containing the saved inventory data
-    Inventory ( std::string file );
-
-    // Destructor. Save the current inventory out to disk.
-    ~Inventory();
+    InventoryManager ( std::string file );
 
     std::vector<Slot> get_slots() const;
     void set_type ( int slot, std::string type );
@@ -27,6 +24,10 @@ public:
 
     std::map<std::string, int> summarize_inventory() const;
 private:
+    // Helper functions to manage reading from/writing to disk
+    void load_from_disk();
+    void save_to_disk();
+
     // The on-disk inventory data
     std::string inventory_file;
 

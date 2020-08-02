@@ -10,7 +10,7 @@
 #include "Client.h"
 #include "Order.h"
 #include "Server.h"
-#include "inventory/Inventory.h"
+#include "inventory/InventoryManager.h"
 #include "State.h"
 #include "Update.h"
 
@@ -52,7 +52,7 @@ private:
     std::mutex access_mutex;
 
     // The current inventory
-    Inventory inventory;
+    InventoryManager inventory;
 
     // The inventory server. It will listen for incoming requests and add them
     // to the queue for later processing.

@@ -11,8 +11,10 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 
-#include "InventoryMsg.h"
+#include "Inventory.h"
 #include "Locations.h"
+
+#define DEBUG 1
 
 BaseManager::BaseManager ( std::string inventory_file ) :
     inventory ( inventory_file ),
@@ -22,8 +24,10 @@ BaseManager::BaseManager ( std::string inventory_file ) :
     expected_state ( State::IDLE )
 {
     // Start heartbeat monitor thread
-    std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
-    t.detach();
+    if ( !DEBUG ) { 
+        std::thread t ( std::bind ( &BaseManager::listen_heartbeat, this ) );
+        t.detach();
+    }
 }
 
 std::string BaseManager::handle_input ( std::string input )
@@ -64,7 +68,7 @@ std::string BaseManager::handle_command ( const Command &command )
         return "Robie's status is " + stateStr;
     } else if ( command.get_command() == "inventory" ){
         std::map<std::string, int> existing = inventory.summarize_inventory();
-        InventoryMsg response;
+        Inventory response;
         response.set_items ( existing );
         return response.serialize();
     } else if ( command.get_command() == "locations" ) {

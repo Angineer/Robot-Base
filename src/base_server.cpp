@@ -19,7 +19,8 @@ int main ( int argc, char *argv[] )
         inv_file = argv[1];
     }
     else{
-        inv_file = "/home/pi/robie.inv";
+        BaseConfig config;
+        inv_file = config.getConfig<std::string> ( "inventory_file" );
     } 
 
     std::cout << "Starting Base Manager" << std::endl;
