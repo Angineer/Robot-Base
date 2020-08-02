@@ -1,55 +1,71 @@
-#include "Client.h"
-#include "Command.h"
-#include "Order.h"
-#include "Update.h"
-
 #include <algorithm>
 #include <csignal>
 #include <iostream>
 #include <map>
 
+#include "Client.h"
+#include "Command.h"
+#include "Inventory.h"
+#include "Order.h"
+#include "Update.h"
 
 void shutdown(int signum){
     std::cout << "Stopping admin client" << std::endl;
     exit(0);
 }
 
-void send_command( Client& client, std::string command_str){
+void send_command ( Client& client, std::string command_str )
+{
     Command command;
-    command.set_command ( command_str );
+    if ( command_str == "inv" ) {
+        command.set_command ( "inventory" );
+        Inventory inventory { client.send ( command ) };
 
-    std::cout << client.send ( command ) << std::endl;
+        for ( const auto& item : inventory.get_items() ) {
+            std::cout << item.second << " x " << item.first << std::endl;
+        }
+    } else {
+        command.set_command ( command_str );
+        std::cout << client.send ( command ) << std::endl;
+    }
 }
 
-void send_order( Client& client ){
+void send_order ( Client& client )
+{
     std::map<std::string, int> items;
 
     std::cout << "-----New order-----" << std::endl;
-    std::cout << "Press enter when done" << std::endl;
+    std::cout << "Leave item type empty to finish" << std::endl;
     while ( true ) {
         std::string name { "None" };
         std::string quant;
 
         std::cout << "Item type: ";
         getline(std::cin, name);
-        std::cout << "Quantity: ";
-        getline(std::cin, quant);
 
         if ( name.empty() ) {
             break;
         }
 
+        std::cout << "Quantity: ";
+        getline(std::cin, quant);
+
         items.insert( { name, stoi ( quant ) } );
     }
 
-    Order order;
-    order.set_location ( 0 );
-    order.set_items ( items );
+    if ( !items.empty() ) {
+        Order order;
+        order.set_location ( 0 );
+        order.set_items ( items );
 
-    std::cout << client.send ( order ) << std::endl;
+        std::cout << client.send ( order ) << std::endl;
+    } else {
+        std::cout << "(Ignoring empty order)" << std::endl;
+    }
 }
 
-void send_update( Client& client ){
+void send_update ( Client& client )
+{
     std::string slot_id;
     std::string new_type;
     std::string new_quant;
@@ -67,7 +83,7 @@ void send_update( Client& client ){
     std::cout << client.send ( update ) << std::endl;
 }
 
-int main(int argc, char *argv[])
+int main ( int argc, char *argv[] )
 {
     // Kill client gracefully on ctrl+c
     signal(SIGINT, shutdown);
@@ -90,12 +106,11 @@ int main(int argc, char *argv[])
             if(user_input == "") user_input = last_input;
             last_input = user_input;
 
-            if (user_input == "status" || user_input == "inv"){
-                send_command(client, user_input);
-            }
+            if ( user_input == "status" || user_input == "inv" )
+                send_command ( client, user_input );
             else if (user_input == "order") send_order( client );
             else if (user_input == "update") send_update( client );
-            else if (user_input == "help"){
+            else if (user_input == "help") {
                 std::cout << "Available commands (enter key will repeat last command):" << std::endl;
                 std::cout << "status    Get robot status" << std::endl;
                 std::cout << "inv       Get current inventory" << std::endl;
