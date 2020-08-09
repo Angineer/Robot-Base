@@ -28,3 +28,5 @@ target_include_directories ( admin_client PUBLIC ./src
                                           PUBLIC ../robot-comm/core
                                           PUBLIC ../robot-comm/msgs )
 target_link_libraries ( admin_client robot-comm )
+
+install ( TARGETS base_server admin_client RUNTIME DESTINATION /usr/bin )
