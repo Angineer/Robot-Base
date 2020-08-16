@@ -70,11 +70,11 @@ void send_update ( Client& client )
     std::string new_type;
     std::string new_quant;
 
-    std::cout << "which slot? ";
+    std::cout << "Which slot do you want to edit? ";
     getline(std::cin, slot_id);
-    std::cout << "what type? ";
+    std::cout << "What will the slot's type be? ";
     getline(std::cin, new_type);
-    std::cout << "how many? ";
+    std::cout << "How many items do you want to add? ";
     getline(std::cin, new_quant);
 
     Update update;
